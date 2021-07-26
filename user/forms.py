@@ -2,8 +2,6 @@ from django import forms
 from user.models import CustomUser
 
 class RegistrationForm(forms.ModelForm):
-    # email = forms.EmailField()
-
     password = forms.CharField(widget=forms.PasswordInput)
     password_2 = forms.CharField(label='Confirm Password', widget=forms.PasswordInput)
     

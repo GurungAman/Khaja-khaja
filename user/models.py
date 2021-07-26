@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, AbstractUser
+from django.contrib.auth.models import AbstractBaseUser
 from user.user_manager import UserManager
 
 # Create your models here.
@@ -9,7 +9,6 @@ class CustomUser(AbstractBaseUser):
     middle_name = models.CharField(max_length=50, blank=True)
     last_name = models.CharField(max_length=50)
     date_joined = models.DateTimeField(auto_now_add=True)
-
 
     # admin privileges
     is_active = models.BooleanField(default=True)
@@ -40,6 +39,3 @@ class CustomUser(AbstractBaseUser):
     @property
     def is_admin(self):
         return self.admin
-
-
-
