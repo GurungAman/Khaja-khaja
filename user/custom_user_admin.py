@@ -4,33 +4,28 @@ from user.forms import RegistrationForm
 
 User = get_user_model()
 
-
 class CustomUserAdmin(UserAdmin):
 
     add_form = RegistrationForm
 
-    list_display = ('email', 'first_name', 'last_name',
-                    'admin', 'staff', 'is_active')
+    list_display = ('email', 'admin', )
     ordering = ('email',)
-    search_fields = ('email', 'first_name', 'middle_name', 'last_name')
+    search_fields = ('email', 'primary_phone_number')
     readonly_fields = ['date_joined', 'last_login',]
     filter_horizontal = ()
     list_filter = ()
 
     fieldsets = (
-        (None, {'fields': ('email', 'password')}),
-        (('Personal info'), {'fields': ('first_name', 'middle_name', 'last_name',)}),
+        (None, {'fields': ('email', 'primary_phone_number', 'password',)}),
         (('Permissions'), {
-            'fields': ('is_active', 'staff', 'admin',),
+            'fields': ('is_active', 'staff', 'admin', 'is_customer', 'is_restaurant',),
         }),
-        (('Important dates'), {'fields': ('last_login', 'date_joined')}),
+        (('Dates'), {'fields': ('last_login', 'date_joined')}),
     )
     add_fieldsets = (
-        (None, {'fields': ('email', 'password', 'password_2')}),
-        (('Personal info'), {
-         'fields': ('first_name', 'middle_name', 'last_name',)}),
+        (None, {'fields': ('email', 'primary_phone_number', 'password', 'password_2')}),
         (('Permissions'), {
-            'fields': ('is_active', 'staff', 'admin',),
+            'fields': ('is_active', 'staff', 'admin', 'is_customer', 'is_restaurant',),
         }),
     )
 
