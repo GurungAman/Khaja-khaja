@@ -10,6 +10,9 @@ class Restaurant(models.Model):
     logo = models.ImageField(upload_to='restaurant/logo/', blank=True)
     license_number = models.CharField(max_length=50)
     seconday_phone_number = models.CharField(blank=True, max_length=50)
+    # address = models.CharField(max_length=100)
+    # bio = models.TextField(blank=True, max_length=200)
+    
 
     def __str__(self):
         return self.name

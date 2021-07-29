@@ -53,7 +53,7 @@ class Customer(models.Model):
     address = models.CharField(max_length=100)
 
     def __str__(self):
-        return self.first_name + self.last_name
+        return f"{self.first_name} {self.last_name}"
 
     @property
     def get_name(self):
@@ -61,6 +61,9 @@ class Customer(models.Model):
     
     def save(self, *args, **kwargs):
         customer = self.customer
+        # customer is inactive and can only use app after verifying through mail
+        # will be added later
+        # customer.is_active = False
         customer.is_customer = True
         customer.is_restaurant = False
         customer.save()

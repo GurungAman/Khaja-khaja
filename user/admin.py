@@ -7,6 +7,5 @@ from user.custom_user_admin import CustomUserAdmin
 admin.site.unregister(Group)
 admin.site.register(CustomUser, CustomUserAdmin)
 
-
 admin.site.register(Customer)
 

@@ -1,12 +1,12 @@
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth import get_user_model
-from user.forms import RegistrationForm
+from user.forms import RegistrationAdminForm
 
 User = get_user_model()
 
 class CustomUserAdmin(UserAdmin):
 
-    add_form = RegistrationForm
+    add_form = RegistrationAdminForm
 
     list_display = ('email', 'admin', )
     ordering = ('email',)
@@ -23,10 +23,10 @@ class CustomUserAdmin(UserAdmin):
         (('Dates'), {'fields': ('last_login', 'date_joined')}),
     )
     add_fieldsets = (
-        (None, {'fields': ('email', 'primary_phone_number', 'password', 'password_2')}),
-        (('Permissions'), {
-            'fields': ('is_active', 'staff', 'admin', 'is_customer', 'is_restaurant',),
-        }),
+        (None, {'fields': ('email', 'password', 'password_2')}),
+        # (('Permissions'), {
+        #     'fields': ('is_active', 'staff', 'admin', 'is_customer', 'is_restaurant',),
+        # }),
     )
 
     def get_form(self, request, obj=None, **kwargs):
