@@ -18,15 +18,12 @@ class CustomUserAdmin(UserAdmin):
     fieldsets = (
         (None, {'fields': ('email', 'primary_phone_number', 'password',)}),
         (('Permissions'), {
-            'fields': ('is_active', 'staff', 'admin', 'is_customer', 'is_restaurant',),
+            'fields': ('is_active', 'staff', 'admin', 'is_customer', 'is_restaurant', 'user_permissions',),
         }),
         (('Dates'), {'fields': ('last_login', 'date_joined')}),
     )
     add_fieldsets = (
         (None, {'fields': ('email', 'password', 'password_2')}),
-        # (('Permissions'), {
-        #     'fields': ('is_active', 'staff', 'admin', 'is_customer', 'is_restaurant',),
-        # }),
     )
 
     def get_form(self, request, obj=None, **kwargs):

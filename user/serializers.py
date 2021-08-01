@@ -5,7 +5,7 @@ from .models import Customer, CustomUser
 
 User = get_user_model()
 
-class CustomUserSerializer(serializers.ModelSerializer):
+class CreateBaseUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required = True,)
     password_1 = serializers.CharField(write_only=True, required = True)
     
@@ -15,7 +15,6 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
 
     def save(self):
-
         user = CustomUser(
             email = self.validated_data['email'],
             primary_phone_number = self.validated_data['primary_phone_number']
@@ -29,16 +28,17 @@ class CustomUserSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
+
 class CustomerSerializer(serializers.ModelSerializer):
-    custom_user = CustomUserSerializer(source='customer')
+    base_user = CreateBaseUserSerializer(source='customer')
 
     class Meta:
         model = Customer
-        fields = ('custom_user', 'id', 'first_name', 'middle_name', 'last_name', 'address' )
+        fields = ('base_user', 'id', 'first_name', 'middle_name', 'last_name', 'address' )
 
     def save(self, validated_data):
-        custom_user = dict(validated_data.pop('custom_user'))
-        user = User.objects.get(email=custom_user['email'])
+        base_user = dict(validated_data.pop('base_user'))
+        user = User.objects.get(email=base_user['email'])
         customer, created = Customer.objects.update_or_create(
             customer = user,
             first_name = validated_data['first_name'],
@@ -47,3 +47,22 @@ class CustomerSerializer(serializers.ModelSerializer):
             address = validated_data['address'], 
             )
         return customer
+
+
+class UpdateCustomerSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField()
+    primary_phone_number = serializers.CharField(max_length=50, required=False)
+
+    class Meta:
+        model = Customer
+        fields = ('email', 'primary_phone_number' ,'first_name', 'middle_name', 'last_name', 'address', )
+
+    # def update(self, instance, validated_data):
+    #     instance.customer.email = validated_data['email']
+    #     instance.customer.primary_phone_number = validated_data.get('primary_phone_number')
+    #     instance.first_name = validated_data['first_name']
+    #     instance.last_name  = validated_data['last_name']
+    #     instance.middle_name = validated_data['middle_name']
+    #     instance.address = validated_data['address']
+    #     instance.save()
+    #     return instance
