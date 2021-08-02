@@ -4,9 +4,8 @@ from rest_framework.decorators import permission_classes, api_view
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from .serializers import CustomerSerializer, CreateBaseUserSerializer, UpdateCustomerSerializer
-from .utils import customer_details, JWT_get_user
+from utils import customer_details, JWT_get_user
 from .models import Customer
 
 User = get_user_model()
@@ -44,55 +43,48 @@ def register_customer(request):
     return Response(response)
 
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def get_customer_details(request):
+class CustomerDetails(APIView):
+
+    permission_classes = [IsAuthenticated]
+
     response = {
         'status': False
     }
-    user = JWT_get_user(request=request)
-    try:
-        if user.is_customer:
+
+    def get(self, request):
+        user = JWT_get_user(request=request)
+        try:
             customer = customer_details(email = user)
-            response['user_details'] = customer
-        # if user.is_restaurant:
-        response['status'] = True
-    except Exception as e:
-        response['message'] = {
-            'error': f"{e.__class__.__name__}"
-        }
-    return Response(response)
+            self.response['user_details'] = customer
+            self.response['status'] = True
+        except Exception as e:
+            self.response['message'] = {
+                'error': f"{e.__class__.__name__}"
+            }
+        return Response(self.response)
 
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def update_user(request):
-    # {
-    #     "email": "test@test.com",
-    #     "primary_phone_number": "dfgdfg",
-    #     "first_name": "test",
-    #     "middle_name": "post",
-    #     "last_name": "grgg",
-    #     "address": "test123"
-    # }
-    response = {
-        'status': False
-    }
-    user = JWT_get_user(request=request)
-    json_str = request.body.decode('utf-8')
-    data = json.loads(json_str)
-    try:
-        if user.is_customer:
+    def put(self, request):
+        # {
+        #     "email": "test@test.com",
+        #     "primary_phone_number": "dfgdfg",
+        #     "first_name": "test",
+        #     "middle_name": "post",
+        #     "last_name": "grgg",
+        #     "address": "test123"
+        # }
+        user = JWT_get_user(request=request)
+        data = request.data
+        try:
             customer = Customer.objects.get(customer__email = user.email)
             customer_serializer = UpdateCustomerSerializer(data=data)
             if customer_serializer.is_valid(raise_exception=True):
                 customer.save()
                 customer_serializer.update(instance = customer, validated_data=data)
                 customer = customer_serializer.data
-                response['user_details'] = customer
-            response['status'] = True
-    except Exception as e:
-        response['message'] = {
-            'error': f"{e.__class__.__name__}"
-        }
-    return Response(response)
+                self.response['user_details'] = customer
+                self.response['status'] = True
+        except Exception as e:
+            self.response['message'] = {
+                'error': f"{e.__class__.__name__}"
+            }
+        return Response(self.response)
