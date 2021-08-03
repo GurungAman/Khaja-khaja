@@ -23,12 +23,15 @@ class Restaurant(models.Model):
 
 
 class Menu(models.Model):
-    name = models.CharField(max_length=50, unique=True)
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name='restaurant_menu')
+    name = models.CharField(max_length=50)
     is_active = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.name} {self.restaurant.name}"
+    
+    class  Meta:
+        unique_together = ['restaurant', 'name']
 
 
 class Category(models.Model):
@@ -48,8 +51,9 @@ class Tags(models.Model):
 class FoodItems(models.Model):
     menu = models.ForeignKey(
         Menu, on_delete=models.CASCADE, related_name='menu')
-    tags = models.ManyToManyField(Tags, related_name='tags')
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    category = models.ForeignKey(
+        Category, related_name='category', on_delete=models.SET_NULL, null=True)
+    tags = models.ManyToManyField(Tags, related_name='tags', blank=True)
     name = models.CharField(max_length=100)
     image = models.ImageField(upload_to='restaurant/food/', blank=True)
     price = models.PositiveIntegerField()
