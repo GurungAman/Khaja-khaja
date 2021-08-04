@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from rest_framework.response import Response
 from .models import Category, Tags, Menu, FoodItems, Restaurant
 from .serializers import CategorySerializer, TagsSerializer, MenuSerializer, FoodItemsSerializer, RestaurantSerializer
-from .restaurant_utils import  menu_details
+from .restaurant_utils import  menu_details, food_items_details, get_food_items
 
 from permissions import RestaurantOnly
 
@@ -172,8 +172,10 @@ class FoodItemsList(APIView):
                 max_price = data['price'].get('max_price')
                 min_price = data['price'].get('min_price')
                 food_items = food_items.filter(Q(price__gte = min_price) & Q(price__lte = max_price))
-            food_items_serializer = FoodItemsSerializer(food_items, many=True)
-            self.response['food_items'] = food_items_serializer.data
+            if data.get('restaurant'):
+                restaurants = Restaurant.objects.filter(name__icontains = data['restaurant'])
+                food_items = get_food_items(restaurants)
+            self.response['food_items'] = food_items_details(food_items)
             self.response['status'] = True
         except Exception as e:
             self.response['error'] = f"{e.__class__.__name__}"
