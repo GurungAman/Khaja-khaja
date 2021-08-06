@@ -56,13 +56,3 @@ class UpdateCustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
         fields = ('email', 'primary_phone_number' ,'first_name', 'middle_name', 'last_name', 'address', )
-
-    # def update(self, instance, validated_data):
-    #     instance.customer.email = validated_data['email']
-    #     instance.customer.primary_phone_number = validated_data.get('primary_phone_number')
-    #     instance.first_name = validated_data['first_name']
-    #     instance.last_name  = validated_data['last_name']
-    #     instance.middle_name = validated_data['middle_name']
-    #     instance.address = validated_data['address']
-    #     instance.save()
-    #     return instance

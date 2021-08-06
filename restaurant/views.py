@@ -1,18 +1,17 @@
 from django.db.models import Q
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from .models import Category, Tags, Menu, FoodItems, Restaurant
-from .serializers import CategorySerializer, TagsSerializer, MenuSerializer, FoodItemsSerializer, RestaurantSerializer
+from .serializers import CategorySerializer, TagsSerializer, MenuSerializer, RestaurantSerializer
 from .restaurant_utils import  menu_details, food_items_details, get_food_items
-
-from permissions import RestaurantOnly
+from permissions import IsRestaurantOrReadOnly
+from .decorators import restaurant_owner_only
 
 # Create your views here.
 
 class CategoryList(APIView):
     # create, delete category and get all categories
-    permission_classes = [IsAuthenticated, RestaurantOnly]
+    permission_classes = [IsRestaurantOrReadOnly]
     response = {
         'status': False
         }
@@ -55,7 +54,7 @@ class CategoryList(APIView):
 
 
 class TagsList(APIView):
-    permission_classes = [IsAuthenticated, RestaurantOnly]
+    permission_classes = [IsRestaurantOrReadOnly]
     response = {
         'status': False
     }
@@ -95,7 +94,7 @@ class TagsList(APIView):
 
 
 class MenuList(APIView):
-    permission_classes = [IsAuthenticated, RestaurantOnly]
+    permission_classes = [IsRestaurantOrReadOnly]
     response = {
         'status': False
     }
@@ -130,8 +129,8 @@ class MenuList(APIView):
         data = request.data
         try:
             menu = Menu.objects.get(restaurant = request.user.restaurant, name=request.data['name'])
-            if data.get('name'):
-                menu.name = data['name']
+            if data.get('new_name'):
+                menu.name = data['new_name']
             if data.get('is_active'):
                 menu.is_active = data['is_active']
             menu.save()
@@ -153,7 +152,7 @@ class MenuList(APIView):
 
 
 class FoodItemsList(APIView):
-    permission_classes = [IsAuthenticatedOrReadOnly, RestaurantOnly]
+    permission_classes = [IsRestaurantOrReadOnly]
     response = {
         'status': False
     }
@@ -161,9 +160,9 @@ class FoodItemsList(APIView):
     def get(self, request):
         data = request.data
         try:
-            food_items = FoodItems.objects.filter()
+            food_items = FoodItems.objects.filter(is_available=True)
             if data.get('name'):
-                food_items = food_items.filter(name__icontains=data['name'])
+                food_items = food_items.filter(name__icontains = data['name'])
             if data.get('category'):
                 food_items = food_items.filter(category__name = data['category'])
             if data.get('tags'):
@@ -180,5 +179,88 @@ class FoodItemsList(APIView):
         except Exception as e:
             self.response['error'] = f"{e.__class__.__name__}"
         return Response(self.response)
-        
 
+    def post(self, request):
+        # {
+        #     "category": 1,
+        #     "tags": [1,2,3,60],
+        #      "image": ,
+        #     "menu" : 1,
+        #     "name": "postmane",
+        #     "price": 500,
+        #     "is_available": true
+        # }
+        data = request.data
+        try:
+            category = Category.objects.get(id = data['category'])
+            menu = Menu.objects.get(id = data['menu'])
+            food_item = FoodItems.objects.create(
+                menu = menu,
+                category = category,
+                name = data['name'],
+                image = data.get('image'),
+                price = data['price'],
+                is_available = data['is_available']
+            )
+            for tag in data['tags']:
+                tag_obj = Tags.objects.get(id=tag)
+                food_item.tags.add(tag_obj)
+            self.response['food_item'] = food_items_details([food_item]) 
+            self.response['status'] = True
+        except Exception as e:
+            self.response['error'] = f"{e.__class__.__name__}"
+        return Response(self.response)
+
+
+class FoodItemDetail(APIView):
+    permission_classes = [IsRestaurantOrReadOnly]
+    response = {
+        'status': False
+    }
+    
+    def get(self, request, pk):
+        try:
+            food_item = FoodItems.objects.get(id = pk)
+            self.response['food_item'] = food_items_details([food_item])
+            self.response['status'] = True
+        except Exception as e:
+            self.response['error'] = f"{e.__class__.__name__}"
+        return Response(self.response)
+
+    @restaurant_owner_only
+    def put(self, request, pk):
+        data = request.data
+        try:
+            food_item = FoodItems.objects.get(id = pk)
+            if data.get('category'):
+                food_item.category = data['category']
+            if data.get('tags'):
+                for tag in data['tags']:
+                    tag_obj = Tags.objects.get(id=tag)
+                    food_item.tags.add(tag_obj)
+            if data.get('name'):
+                food_item.name = data['name']
+            if data.get('image'):
+                food_item.image = data['image']
+            if data.get('price'):
+                food_item.price = data['price']
+            if data.get('is_available'):
+                food_item.is_available = data['is_available']
+            food_item.save()
+            self.response['food_item'] = food_items_details([food_item])
+            self.response['status'] = True
+        except Exception as e:
+            self.response['error'] = f"{e.__class__.__name__}"
+        return Response(self.response)
+
+    @restaurant_owner_only
+    def delete(self, request, pk):
+        try:
+            food_item = FoodItems.objects.get(id=pk)
+            food_item_name = food_item.name
+            food_item.delete()
+            self.response['status'] = True
+            self.response['message'] = f"{food_item_name} successsfully deleted."
+        except Exception as e:
+            self.response['error'] = f"{e.__class__.__name__}"
+        return Response(self.response)

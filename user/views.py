@@ -1,12 +1,13 @@
 import json
 from django.contrib.auth import get_user_model
 from rest_framework.decorators import permission_classes, api_view
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializers import CustomerSerializer, CreateBaseUserSerializer, UpdateCustomerSerializer
-from utils import customer_details, JWT_get_user
+from .customer_utils import customer_details
 from .models import Customer
+from permissions import IsCustomerOnly
 
 User = get_user_model()
 
@@ -45,14 +46,13 @@ def register_customer(request):
 
 class CustomerDetails(APIView):
 
-    permission_classes = [IsAuthenticated]
-
+    permission_classes = [IsCustomerOnly]
     response = {
         'status': False
     }
 
     def get(self, request):
-        user = JWT_get_user(request=request)
+        user = request.user
         try:
             customer = customer_details(email = user)
             self.response['user_details'] = customer
@@ -72,7 +72,7 @@ class CustomerDetails(APIView):
         #     "last_name": "grgg",
         #     "address": "test123"
         # }
-        user = JWT_get_user(request=request)
+        user = request.user
         data = request.data
         try:
             customer = Customer.objects.get(customer__email = user.email)
@@ -83,6 +83,19 @@ class CustomerDetails(APIView):
                 customer = customer_serializer.data
                 self.response['user_details'] = customer
                 self.response['status'] = True
+        except Exception as e:
+            self.response['message'] = {
+                'error': f"{e.__class__.__name__}"
+            }
+        return Response(self.response)
+    
+    def delete(self, request):
+        user = request.user
+        try:
+            customer = Customer.objects.get(customer__email = user.email)
+            customer.is_active = False
+            customer.save()
+            self.response['status'] = True
         except Exception as e:
             self.response['message'] = {
                 'error': f"{e.__class__.__name__}"

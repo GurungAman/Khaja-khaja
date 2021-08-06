@@ -1,6 +1,6 @@
 from .serializers import MenuSerializer, FoodItemsSerializer, TagsSerializer
 from .models import FoodItems, Menu, Category, Tags
-import json
+
 def menu_details(menu):
     response = []
     for item in menu:

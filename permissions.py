@@ -1,13 +1,19 @@
-from rest_framework.permissions import BasePermission
+from rest_framework.permissions import BasePermission, SAFE_METHODS
 
-class RestaurantOnly(BasePermission):
-    
+class IsRestaurantOrReadOnly(BasePermission):
     def has_permission(self, request, view):
-        if request.user.is_restaurant:
+        #  called on all http request
+        if request.method in SAFE_METHODS:
             return True
-        return False
+        elif request.user.is_anonymous:
+            return False
+        return request.user.is_restaurant
 
-    def has_object_permission(self, request, view, obj):
-        if request.user.is_restaurant:
+
+class IsCustomerOnly(BasePermission):
+    def has_permission(self, request, view):
+        if request.method in SAFE_METHODS:
             return True
-        return False
+        elif request.user.is_anonymous:
+            return False
+        return request.user.is_customer
