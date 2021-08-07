@@ -1,13 +1,51 @@
+import json
 from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.decorators import permission_classes, api_view
+from rest_framework.permissions import AllowAny
 from .models import Category, Tags, Menu, FoodItems, Restaurant
 from .serializers import CategorySerializer, TagsSerializer, MenuSerializer, RestaurantSerializer
 from .restaurant_utils import  menu_details, food_items_details, get_food_items
 from permissions import IsRestaurantOrReadOnly
 from .decorators import restaurant_owner_only
+from user.serializers import CreateBaseUserSerializer
 
 # Create your views here.
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register_restaurant(request):
+    # {
+    #     "base_user": {
+    #         "email": "new1@test.com",
+    #         "primary_phone_number": "asdklfju",
+    #         "password": "amangrg123",
+    #         "password_1": "amangrg123"
+    #     },
+    #     "name": "test",
+    #     "logo": "files",
+    #     "license_number": "grgg",
+    #     "address": "pkr",
+    #     "seconday_phone_number": "",
+    #      "bio": ""
+    # }
+    response = {
+        'status': False
+    }
+    json_str = request.body.decode('utf-8')
+    customer_data = json.loads(json_str)
+    base_user_serializer = CreateBaseUserSerializer(data = customer_data['base_user'])
+    restaurant_serializer = RestaurantSerializer(data=customer_data)
+    if restaurant_serializer.is_valid(raise_exception=False) and base_user_serializer.is_valid(raise_exception=False):
+        base_user_serializer.save(customer_data['base_user'])
+        data = restaurant_serializer.data
+        restaurant_serializer.save(data)
+        response['data'] = data
+        response['status'] = True
+    else:
+        response['errors'] = restaurant_serializer.errors
+    return Response(response)
+
 
 class CategoryList(APIView):
     # create, delete category and get all categories

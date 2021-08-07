@@ -14,16 +14,20 @@ class CreateBaseUserSerializer(serializers.ModelSerializer):
         fields = ('id', 'email', 'primary_phone_number', 'password', 'password_1')
 
 
-    def save(self):
+    def save(self, validated_data):
         user = CustomUser(
-            email = self.validated_data['email'],
-            primary_phone_number = self.validated_data['primary_phone_number']
+            email = validated_data['email'],
+            primary_phone_number = validated_data['primary_phone_number']
             )
-        password1 = self.validated_data['password']
-        password2 = self.validated_data['password_1']
+        password1 = validated_data['password']
+        password2 = validated_data['password_1']
 
         if password1 != password2 or password1 is None:
-            raise serializers.ValidationError({"Password": "Password must match."})
+            raise serializers.ValidationError({
+                "errors": {
+                    "Password": "Password must match."
+                }
+            })
         user.set_password(password1)
         user.save()
         return user
@@ -38,11 +42,11 @@ class CustomerSerializer(serializers.ModelSerializer):
 
     def save(self, validated_data):
         base_user = dict(validated_data.pop('base_user'))
-        user = User.objects.get(email=base_user['email'])
-        customer, created = Customer.objects.update_or_create(
+        user = User.objects.get(email = base_user['email'])
+        customer = Customer.objects.create(
             customer = user,
             first_name = validated_data['first_name'],
-            middle_name = validated_data['middle_name'],
+            middle_name = validated_data.get('middle_name'),
             last_name = validated_data['last_name'],
             address = validated_data['address'], 
             )

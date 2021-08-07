@@ -32,15 +32,17 @@ def register_customer(request):
         'status': False
     }
     json_str = request.body.decode('utf-8')
-    customer_data = json.loads(json_str)
-    base_user_serializer = CreateBaseUserSerializer(data = customer_data['base_user'])
-    customer_serializer = CustomerSerializer(data=customer_data)
-    if base_user_serializer.is_valid(raise_exception=True) and  customer_serializer.is_valid(raise_exception=True):            
-        base_user_serializer.save()
+    restaurant_data = json.loads(json_str)
+    base_user_serializer = CreateBaseUserSerializer(data = restaurant_data['base_user'])
+    customer_serializer = CustomerSerializer(data=restaurant_data)
+    if customer_serializer.is_valid(raise_exception=False) and base_user_serializer.is_valid(raise_exception=False):
+        base_user_serializer.save(restaurant_data['base_user'])
         data = customer_serializer.data
         customer_serializer.save(data)
-    response['data'] = data
-    response['status'] = True
+        response['data'] = data
+        response['status'] = True
+    else:
+        response['errors'] =  customer_serializer.errors
     return Response(response)
 
 
