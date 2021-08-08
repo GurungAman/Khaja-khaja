@@ -5,8 +5,8 @@ from rest_framework.response import Response
 from rest_framework.decorators import permission_classes, api_view
 from rest_framework.permissions import AllowAny
 from .models import Category, Tags, Menu, FoodItems, Restaurant
-from .serializers import CategorySerializer, TagsSerializer, MenuSerializer, RestaurantSerializer
-from .restaurant_utils import  menu_details, food_items_details, get_food_items
+from .serializers import CategorySerializer, TagsSerializer, MenuSerializer, RestaurantSerializer, UpdateRestaurantSerializer
+from .restaurant_utils import  menu_details, food_items_details, get_food_items, restaurant_details
 from permissions import IsRestaurantOrReadOnly
 from .decorators import restaurant_owner_only
 from user.serializers import CreateBaseUserSerializer
@@ -27,25 +27,69 @@ def register_restaurant(request):
     #     "license_number": "grgg",
     #     "address": "pkr",
     #     "seconday_phone_number": "",
-    #      "bio": ""
+    #     "bio": ""
     # }
     response = {
         'status': False
     }
-    json_str = request.body.decode('utf-8')
-    customer_data = json.loads(json_str)
-    base_user_serializer = CreateBaseUserSerializer(data = customer_data['base_user'])
-    restaurant_serializer = RestaurantSerializer(data=customer_data)
-    if restaurant_serializer.is_valid(raise_exception=False) and base_user_serializer.is_valid(raise_exception=False):
-        base_user_serializer.save(customer_data['base_user'])
-        data = restaurant_serializer.data
-        restaurant_serializer.save(data)
-        response['data'] = data
-        response['status'] = True
-    else:
-        response['errors'] = restaurant_serializer.errors
+    try:
+        json_str = request.body.decode('utf-8')
+        customer_data = json.loads(json_str)
+        base_user_serializer = CreateBaseUserSerializer(data = customer_data['base_user'])
+        restaurant_serializer = RestaurantSerializer(data=customer_data)
+        if restaurant_serializer.is_valid(raise_exception=False) and base_user_serializer.is_valid(raise_exception=False):
+            base_user_serializer.save(customer_data['base_user'])
+            data = restaurant_serializer.data
+            restaurant_serializer.save(data)
+            response['data'] = data
+            response['status'] = True
+        else:
+            response['error'] = restaurant_serializer.errors
+    except Exception as e:
+        response['error'] = f"{e.__class__.__name__}"
     return Response(response)
 
+
+class RestaurantList(APIView):
+    response = {
+        'status': False,
+    }
+    permission_classes = [IsRestaurantOrReadOnly]
+    
+    def get(self, request):
+        try:
+            restaurants = Restaurant.objects.filter(restaurant__is_active = True)
+            self.response['restaurant'] = restaurant_details(restaurants)
+        except Exception as e:
+            self.response['error'] = f"{e.__class__.__name__}"
+        return Response(self.response)
+
+    def put(self, request):
+        user = request.user
+        data = request.data
+        try:
+            restaurant = Restaurant.objects.get(restaurant__email = user.email)
+            restaurant_serializer = UpdateRestaurantSerializer(data = data)
+            if restaurant_serializer.is_valid(raise_exception = False):
+                restaurant_serializer.update(instance=restaurant, validated_data=data)
+                self.response['restaurant'] = restaurant_details([restaurant])
+                self.response['status'] = True
+            else:
+                self.response['error'] = restaurant_serializer.errors
+        except Exception as e:
+            self.response['error'] = f"{e.__class__.__name__}"
+        return Response(self.response)
+
+    def delete(self, request):
+        user = request.user
+        try:
+            restaurant = Restaurant.objects.get(restaurant__email = user.email)
+            restaurant.is_active = False
+            restaurant.save()
+            self.response['status'] = True
+        except Exception as e:
+            self.response['error'] = f"{e.__class__.__name__}"
+        return Response(self.response)
 
 class CategoryList(APIView):
     # create, delete category and get all categories
@@ -61,22 +105,20 @@ class CategoryList(APIView):
             self.response['category'] = category_serializer.data
             self.response['status'] = True
         except Exception as e:
-            self.response['status'] = False
-            self.response['message'] = {
-                'error': f'{e.__class__.__name__}'
-            }
-        response = (self.response)
-        return Response(response)
+            self.response['error'] = f'{e.__class__.__name__}'
+        return Response(self.response)
     
     def post(self, request):
-        category_serializer = CategorySerializer(data=request.data)
-        if category_serializer.is_valid():
-            category_serializer.save()
-            self.response['status'] = True
-            self.response['category'] = category_serializer.data
-        else:
-            self.response['status'] = False
-            self.response['error'] = category_serializer.errors
+        try:
+            category_serializer = CategorySerializer(data=request.data)
+            if category_serializer.is_valid(raise_exception = False):
+                category_serializer.save()
+                self.response['status'] = True
+                self.response['category'] = category_serializer.data
+            else:
+                self.response['error'] = category_serializer.errors
+        except Exception as e:
+            self.response['error'] = f'{e.__class__.__name__}'
         return Response(self.response)
 
     def delete(self, request):
@@ -87,7 +129,6 @@ class CategoryList(APIView):
             self.response['status'] = True
         except Exception as e:
             self.response['error'] = f"{e.__class__.__name__}"
-            self.response['status'] = False
         return Response(self.response)
 
 
@@ -104,20 +145,20 @@ class TagsList(APIView):
             self.response['tag'] = tags_serializer.data
             self.response['status'] = True
         except Exception as e:
-            self.response['message'] = {
-                'error': f'{e.__class__.__name__}'
-            }
-        response = (self.response)
-        return Response(response)
+            self.response['error'] = f'{e.__class__.__name__}'
+        return Response(self.response)
 
     def post(self, request):
-        tags_serializer = TagsSerializer(data=request.data)
-        if tags_serializer.is_valid():
-            tags_serializer.save()
-            self.response['status'] = True
-            self.response['tag'] = tags_serializer.data
-        else:
-            self.response['error'] = tags_serializer.errors
+        try:
+            tags_serializer = TagsSerializer(data=request.data)
+            if tags_serializer.is_valid(raise_exception = False):
+                tags_serializer.save()
+                self.response['status'] = True
+                self.response['tag'] = tags_serializer.data
+            else:
+                self.response['error'] = tags_serializer.errors
+        except Exception as e:
+            self.response['error'] = f'{e.__class__.__name__}'
         return Response(self.response)
 
     def delete(self, request):
@@ -143,11 +184,8 @@ class MenuList(APIView):
             self.response['menu'] = menu_details(menu)
             self.response['status'] = True
         except Exception as e:
-            self.response['message'] = {
-                'error': f'{e.__class__.__name__}'
-            }
-        response = (self.response)
-        return Response(response)
+            self.response['error'] = f'{e.__class__.__name__}'
+        return Response(self.response)
 
     def post(self, request):
         data = request.data
@@ -173,6 +211,7 @@ class MenuList(APIView):
                 menu.is_active = data['is_active']
             menu.save()
             self.response['message'] = f"{menu} successfully Updated"
+            self.response['menu'] = MenuSerializer(menu).data
             self.response['status'] = True
         except Exception as e:
             self.response['error'] = f"{e.__class__.__name__}"

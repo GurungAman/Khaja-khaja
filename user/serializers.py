@@ -54,9 +54,8 @@ class CustomerSerializer(serializers.ModelSerializer):
 
 
 class UpdateCustomerSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField()
     primary_phone_number = serializers.CharField(max_length=50, required=False)
 
     class Meta:
         model = Customer
-        fields = ('email', 'primary_phone_number' ,'first_name', 'middle_name', 'last_name', 'address', )
+        fields = ('primary_phone_number' ,'first_name', 'middle_name', 'last_name', 'address', )

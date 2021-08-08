@@ -50,3 +50,11 @@ class RestaurantSerializer(serializers.ModelSerializer):
             bio = validated_data.get('bio'),
         )
         return restaurant
+
+
+class UpdateRestaurantSerializer(serializers.ModelSerializer):
+    primary_phone_number = serializers.CharField(max_length=50, required=False)
+
+    class Meta:
+        model = Restaurant
+        fields = ('primary_phone_number', 'name', 'logo', 'license_number', 'seconday_phone_number', 'address', 'bio')
