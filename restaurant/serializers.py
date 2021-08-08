@@ -54,6 +54,9 @@ class RestaurantSerializer(serializers.ModelSerializer):
 
 class UpdateRestaurantSerializer(serializers.ModelSerializer):
     primary_phone_number = serializers.CharField(max_length=50, required=False)
+    license_number = serializers.CharField(required=False)
+    name = serializers.CharField(required=False)
+    address = serializers.CharField(required=False)
 
     class Meta:
         model = Restaurant

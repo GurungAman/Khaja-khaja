@@ -2,6 +2,7 @@ from .serializers import MenuSerializer, FoodItemsSerializer, TagsSerializer, Re
 from .models import FoodItems, Menu, Category, Tags
 
 def restaurant_details(restaurants):
+    # takes queryset as parameter
     response  = []
     for restaurant in restaurants:
         restaurant_serializer = RestaurantSerializer(restaurant)

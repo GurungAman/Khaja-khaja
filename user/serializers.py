@@ -55,6 +55,9 @@ class CustomerSerializer(serializers.ModelSerializer):
 
 class UpdateCustomerSerializer(serializers.ModelSerializer):
     primary_phone_number = serializers.CharField(max_length=50, required=False)
+    first_name = serializers.CharField(required=False)
+    last_name = serializers.CharField(required=False)
+    address = serializers.CharField(required=False)
 
     class Meta:
         model = Customer

@@ -78,16 +78,15 @@ class CustomerDetails(APIView):
         data = request.data
         try:
             customer = Customer.objects.get(customer__email = user.email)
-            customer_serializer = UpdateCustomerSerializer(data=data)
+            customer_serializer = UpdateCustomerSerializer(data = data)
             if customer_serializer.is_valid(raise_exception=False):
-                customer_serializer.update(instance = customer, validated_data=data)
-                customer = customer_serializer.data
-                self.response['user_details'] = customer
+                customer_serializer.update(instance = customer, validated_data = data)
+                self.response['user_details'] = customer_details(email = user.email)
                 self.response['status'] = True
             else:
                 self.response['error'] = customer_serializer.errors
         except Exception as e:
-            self.response['error'] = f"{e.__class__.__name__}"
+            self.response['error'] = f"{e.__class__.__name__ }"
         return Response(self.response)
     
     def delete(self, request):

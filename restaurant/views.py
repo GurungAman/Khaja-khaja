@@ -50,6 +50,21 @@ def register_restaurant(request):
     return Response(response)
 
 
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def restaurant_detail(request, pk):
+    response = {
+        'status': False
+        } 
+    try:
+        restaurant = Restaurant.objects.get(id=pk)
+        response['restaurant_detail'] = restaurant_details([restaurant])
+        response['status'] = True
+    except Exception as e:
+        response['error'] = f"{e.__class__.__name__}"
+    return Response(response)
+
+
 class RestaurantList(APIView):
     response = {
         'status': False,
@@ -71,7 +86,7 @@ class RestaurantList(APIView):
             restaurant = Restaurant.objects.get(restaurant__email = user.email)
             restaurant_serializer = UpdateRestaurantSerializer(data = data)
             if restaurant_serializer.is_valid(raise_exception = False):
-                restaurant_serializer.update(instance=restaurant, validated_data=data)
+                restaurant_serializer.update(instance = restaurant, validated_data=data)
                 self.response['restaurant'] = restaurant_details([restaurant])
                 self.response['status'] = True
             else:
@@ -90,6 +105,7 @@ class RestaurantList(APIView):
         except Exception as e:
             self.response['error'] = f"{e.__class__.__name__}"
         return Response(self.response)
+
 
 class CategoryList(APIView):
     # create, delete category and get all categories
