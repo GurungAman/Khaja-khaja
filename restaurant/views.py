@@ -57,9 +57,12 @@ def restaurant_detail(request, pk):
         'status': False
         } 
     try:
-        restaurant = Restaurant.objects.get(id=pk)
-        response['restaurant_detail'] = restaurant_details([restaurant])
-        response['status'] = True
+        restaurant = Restaurant.objects.get(id = pk)
+        if restaurant.restaurant.is_active:
+            response['restaurant_detail'] = restaurant_details(restaurant)
+            response['status'] = True
+        else:
+            response['error'] = f'Restaurant {restaurant.name} is not active'
     except Exception as e:
         response['error'] = f"{e.__class__.__name__}"
     return Response(response)
@@ -197,6 +200,9 @@ class MenuList(APIView):
     def get(self, request):
         try:
             menu = Menu.objects.all()
+            user = request.user
+            if user.is_anonymous or user.is_customer:
+                menu = menu.filter(is_active = True)
             self.response['menu'] = menu_details(menu)
             self.response['status'] = True
         except Exception as e:

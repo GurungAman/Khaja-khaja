@@ -25,6 +25,15 @@ for i in range(5):
         address = f.address(),
     )
 
+#  Create tags and categories
+for i in range(7):
+    tags = Tags.objects.create(
+        name=f"tag {i+1}"
+    )
+    category = Category.objects.create(
+        name=f"category {i+1}"
+    )
+
 # Create restaurants and Menu
 for i in range(5):
     base_user = User.objects.create_user(
@@ -37,19 +46,20 @@ for i in range(5):
         license_number = ''.join(random.choices(
             string.ascii_uppercase + string.digits, k=7)),
         address =f.address(),
-        bio = f.text()[:30]
+        bio = f.text()[:100]
     )
     print(f"creating restaurant {restaurant.name}")
     menu = Menu.objects.create(
         name = f"menu {i+1}",
         restaurant = restaurant
     )
-
-#  Create tags and categories
-for i in range(7):
-    tags = Tags.objects.create(
-        name = f"tag {i+1}" 
-        )
-    category = Category.objects.create(
-        name = f"category {i+1}"
+    print(f"creating menu {menu.name}")
+    category = Category.objects.get(id = i+1)
+    food_item = FoodItems.objects.create(
+        menu = menu,
+        category = category,
+        name = f'food-item {i+1}',
+        price = 100,
+        is_available = True,
     )
+    print(f"creating food item {food_item.name}")
