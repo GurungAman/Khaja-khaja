@@ -11,28 +11,25 @@ class OrderItem(models.Model):
     cost = models.PositiveIntegerField(default = 0)
 
     def __str__(self):
-        return self.user.get_name
+        return f"{self.user.first_name} {self.food_item.name}"
     
     def save(self, *args, **kwargs):
         self.cost = self.food_item.price * self.quantity
         super(OrderItem, self).save(*args, **kwargs)
 
+
 class Order(models.Model):
+    STATUS = (
+        ('pending', 'Pending'),
+        ('processing', 'Processing'),
+        ('delivered', 'Delivered')
+    )
     user = models.ForeignKey(Customer, on_delete=models.CASCADE)
     order_items = models.ManyToManyField(OrderItem)
+    order_status = models.CharField(max_length=50, choices=STATUS, default='pending')
+    shipping_address = models.CharField(max_length=100)
+    discount_price = models.PositiveIntegerField(blank=True, default=0)
     total_cost = models.PositiveIntegerField(default=0)
-    shipping_addrses = models.CharField(max_length=100)
 
     def __str__(self):
         return self.user.get_name
-    
-    @property
-    def get_total_cost(self):
-        cost = 0
-        for order_item in self.order_items.all():
-            cost += order_item.cost
-        return cost
-
-    def save(self, *args, **kwargs):
-        self.total_cost = self.get_total_cost
-        super(Order, self).save(*args, **kwargs)
