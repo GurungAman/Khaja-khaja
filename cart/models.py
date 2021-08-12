@@ -28,8 +28,19 @@ class Order(models.Model):
     order_items = models.ManyToManyField(OrderItem)
     order_status = models.CharField(max_length=50, choices=STATUS, default='pending')
     shipping_address = models.CharField(max_length=100)
-    discount_price = models.PositiveIntegerField(blank=True, default=0)
-    total_cost = models.PositiveIntegerField(default=0)
+    total_cost = models.DecimalField(max_digits=8, decimal_places=2, default=0)
 
     def __str__(self):
         return self.user.get_name
+
+class Discount(models.Model):
+    DISCOUNT_TYPES = (
+        ('percentage', 'Percentage'),
+        ('amount', 'Amount')
+    )
+    discount_type = models.CharField(max_length=50, choices=DISCOUNT_TYPES, default='amount')
+    discount = models.DecimalField(max_digits=8, decimal_places=2)
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='order_discount')
+
+    def __str__(self):
+        return f"{self.order.user.get_name}"

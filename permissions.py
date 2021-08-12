@@ -12,8 +12,6 @@ class IsRestaurantOrReadOnly(BasePermission):
 
 class IsCustomerOnly(BasePermission):
     def has_permission(self, request, view):
-        if request.method in SAFE_METHODS:
-            return True
-        elif request.user.is_anonymous:
+        if request.user.is_anonymous:
             return False
         return request.user.is_customer

@@ -40,11 +40,21 @@ class OrderDetail(APIView):
     permission_classes = [IsCustomerOnly]
 
     def post(self, request):
+        # {
+        #     "order_items": [10, 11, 12],
+        #     "shipping_address": "test",
+        #     "discount_data": None / {
+        #         "discount_type": "amount",
+        #         "discount_amount": 100
+        #     }
+        # }
         data = request.data
         data['user'] = request.user.pk
+        print(data)
         try:
             order_serializer = OrderSerializer(data = data)           
-            if order_serializer.is_valid(raise_exception=True):
+            print(order_serializer.is_valid())
+            if order_serializer.is_valid(raise_exception=False):
                 order = order_serializer.save(validated_data=data)
                 self.response['status'] = True
                 self.response['order'] = order_details(order_serializer.data)
@@ -54,3 +64,17 @@ class OrderDetail(APIView):
         except Exception as e:
             self.response['error'] = f"{e}"
         return Response(self.response)
+    
+    def put(self, request):
+        data = request.data
+        user = request.user
+        print(data)
+        try:
+            order = Order.objects.get(id = data['order'])
+            if data.get('shipping_address'):
+                order.shipping_address = data['shipping_address']
+            # if data.get()
+        except Exception as e:
+            self.response['error'] = f"{e}"
+        return Response(self.response)
+
