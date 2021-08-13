@@ -1,5 +1,5 @@
-from .serializers import MenuSerializer, FoodItemsSerializer, TagsSerializer, RestaurantSerializer
-from .models import FoodItems, Menu, Category, Tags
+from .serializers import MenuSerializer, FoodItemsSerializer, RestaurantSerializer
+from .models import Discount, FoodItems, Menu, Category, Tags
 
 def restaurant_details(restaurants):
     # takes queryset as parameter
@@ -42,6 +42,11 @@ def food_items_details(food_items):
         data['restaurant'] = menu.restaurant.name
         data['category'] = Category.objects.get(id = data['category']).name
         data['tags'] = get_tags(tags = data['tags'])
+        try:
+            discount = Discount.objects.get(food_item__id=data['id'])
+            data['discount'] = discount.discount_amount
+        except:
+            data['discount'] = 0
         response.append(data)
     return response 
 

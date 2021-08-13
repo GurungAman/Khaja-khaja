@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import permission_classes, api_view
 from rest_framework.permissions import AllowAny
-from .models import Category, Tags, Menu, FoodItems, Restaurant
+from .models import Category, Tags, Menu, FoodItems, Restaurant, Discount
 from .serializers import CategorySerializer, TagsSerializer, MenuSerializer, RestaurantSerializer, UpdateRestaurantSerializer
 from .restaurant_utils import  menu_details, food_items_details, get_food_items, restaurant_details
 from permissions import IsRestaurantOrReadOnly
@@ -273,6 +273,9 @@ class FoodItemsList(APIView):
             if data.get('restaurant'):
                 restaurants = Restaurant.objects.filter(name__icontains = data['restaurant'])
                 food_items = get_food_items(restaurants)
+            if data.get('discount'):
+                discounted_food_items = Discount.objects.filter()
+                food_items = [item.food_item for item in discounted_food_items]
             self.response['food_items'] = food_items_details(food_items)
             self.response['status'] = True
         except Exception as e:
@@ -349,7 +352,7 @@ class FoodItemDetail(APIView):
             self.response['food_item'] = food_items_details([food_item])
             self.response['status'] = True
         except Exception as e:
-            self.response['error'] = f"{e.__class__.__name__}"
+            self.response['error'] = f"{e}"
         return Response(self.response)
 
     @restaurant_owner_only
@@ -363,3 +366,52 @@ class FoodItemDetail(APIView):
         except Exception as e:
             self.response['error'] = f"{e.__class__.__name__}"
         return Response(self.response)
+
+class DiscountView(APIView):
+
+    permission_classes = [IsRestaurantOrReadOnly]
+    response = {
+        'status': False
+    }
+
+    @restaurant_owner_only
+    def post(self, request):
+        data = request.data
+        try:
+            food_item = FoodItems.objects.get(id = data['food_item_id'])
+            discount = Discount.objects.create(
+                discount_type=data['discount']['discount_type'],
+                discount_amount = data['discount']['amount'],
+                food_item = food_item
+                )
+            self.response['status'] = True
+        except Exception as e:
+            self.response['error'] = f"{e.__class__.__name__}"
+        return Response(self.response)
+
+    @restaurant_owner_only
+    def put(self, request):
+        data = request.data
+        try:
+            discount = Discount.objects.get(food_item__id = data['food_item_id'])
+            if data.get('discount_type'):
+                discount.discount_type = data['discount_type']
+            if data.get('amount'): 
+                discount.discount_amount = data['discount_amount']
+            discount.save()
+            self.response['status'] = True
+        except Exception as e:
+            self.response['error'] = f"{e.__class__.__name__}"
+        return Response(self.response)
+
+    @restaurant_owner_only
+    def delete(self, request):
+        data = request.data
+        try:
+            if data['delete_discount']:
+                discount = Discount.objects.get(food_item__id=data['food_item_id'])
+                discount.delete()
+        except Exception as e:
+            self.response['error'] = f"{e.__class__.__name__}"
+        return Response(self.response)
+

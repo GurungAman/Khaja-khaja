@@ -43,14 +43,9 @@ class OrderDetail(APIView):
         # {
         #     "order_items": [10, 11, 12],
         #     "shipping_address": "test",
-        #     "discount_data": None / {
-        #         "discount_type": "amount",
-        #         "discount_amount": 100
-        #     }
         # }
         data = request.data
         data['user'] = request.user.pk
-        print(data)
         try:
             order_serializer = OrderSerializer(data = data)           
             print(order_serializer.is_valid())
@@ -68,7 +63,6 @@ class OrderDetail(APIView):
     def put(self, request):
         data = request.data
         user = request.user
-        print(data)
         try:
             order = Order.objects.get(id = data['order'])
             if data.get('shipping_address'):

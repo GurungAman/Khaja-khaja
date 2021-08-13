@@ -19,6 +19,7 @@ class Restaurant(models.Model):
         restaurant = self.restaurant
         restaurant.is_customer = False
         restaurant.is_restaurant = True
+        restaurant.save()
         super(Restaurant, self).save(*args, **kwargs)
 
 
@@ -64,3 +65,18 @@ class FoodItems(models.Model):
 
     class Meta:
         unique_together = ['menu', 'name',]
+
+
+class Discount(models.Model):
+    DISCOUNT_TYPES = (
+        ('percentage', 'Percentage'),
+        ('amount', 'Amount')
+    )
+    discount_type = models.CharField(
+        max_length=50, choices=DISCOUNT_TYPES, default='amount')
+    discount_amount = models.DecimalField(max_digits=8, decimal_places=2)
+    food_item = models.OneToOneField(
+        FoodItems, on_delete=models.CASCADE, related_name='food_discount')
+
+    def __str__(self):
+        return f"{self.food_item.name}"

@@ -12,5 +12,6 @@ urlpatterns = [
     path('restaurant/food_items/tags/', TagsList.as_view(), ),    
     path('restaurant/food_items/', FoodItemsList.as_view(), ),
     path('restaurant/food_items/<int:pk>', FoodItemDetail.as_view(), ),
+    path('restaurant/food_items/discount/', DiscountView.as_view(), ),
 
 ]
