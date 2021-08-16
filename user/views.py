@@ -77,7 +77,7 @@ class CustomerDetails(APIView):
         user = request.user
         data = request.data
         try:
-            customer = Customer.objects.get(customer__email = user.email)
+            customer = Customer.objects.get(customer = user)
             customer_serializer = UpdateCustomerSerializer(data = data)
             if customer_serializer.is_valid(raise_exception=False):
                 customer_serializer.update(instance = customer, validated_data = data)
@@ -92,7 +92,7 @@ class CustomerDetails(APIView):
     def delete(self, request):
         user = request.user
         try:
-            customer = Customer.objects.get(customer__email = user.email)
+            customer = Customer.objects.get(customer = user)
             customer.is_active = False
             customer.save()
             self.response['status'] = True

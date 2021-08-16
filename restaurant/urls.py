@@ -6,8 +6,6 @@ urlpatterns = [
     path('restaurant/<int:pk>', restaurant_detail, ),
     path('restaurant/', RestaurantList.as_view(), ),
 
-    path('restaurant/menu/', MenuList.as_view(), ),
-
     path('restaurant/food_items/category/', CategoryList.as_view(), ),
     path('restaurant/food_items/tags/', TagsList.as_view(), ),    
     path('restaurant/food_items/', FoodItemsList.as_view(), ),

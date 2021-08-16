@@ -1,5 +1,5 @@
-from .serializers import MenuSerializer, FoodItemsSerializer, RestaurantSerializer
-from .models import Discount, FoodItems, Menu, Category, Tags
+from .serializers import FoodItemsSerializer, RestaurantSerializer
+from .models import Discount, FoodItems, Restaurant, Category, Tags
 
 def restaurant_details(restaurants):
     # takes queryset as parameter
@@ -12,17 +12,6 @@ def restaurant_details(restaurants):
         data['primary_phone_number'] = base_user['primary_phone_number']
         response.append(data)
     return response
-
-
-def menu_details(menu):
-    response = []
-    for item in menu:
-        menu_serializer= MenuSerializer(item)
-        data = menu_serializer.data
-        data['total_items'] = item.menu.all().count()
-        response.append(data)
-    return response
-
 
 def get_tags(tags):
     response = []
@@ -37,9 +26,8 @@ def food_items_details(food_items):
     for item in food_items:
         food_items_serializer = FoodItemsSerializer(item)
         data = food_items_serializer.data
-        menu = Menu.objects.get(id = data['menu'])
-        data['menu'] = menu.name
-        data['restaurant'] = menu.restaurant.name
+        restaurant = Restaurant.objects.get(id = data['restaurant'])
+        data['restaurant'] = restaurant.name
         data['category'] = Category.objects.get(id = data['category']).name
         data['tags'] = get_tags(tags = data['tags'])
         try:
@@ -47,13 +35,21 @@ def food_items_details(food_items):
             data['discount'] = discount.discount_amount
         except:
             data['discount'] = 0
+        data.pop('is_available')
         response.append(data)
     return response 
 
 def get_food_items(restaurants):
     food_items = []
     for restaurant in restaurants:
-        food_item = FoodItems.objects.filter(menu__restaurant = restaurant)    
+        food_item = FoodItems.objects.filter(restaurant = restaurant, is_available = True)
         for x in food_item:
             food_items.append(x)
     return food_items
+
+def add_tags_to_food_item(food_item, tags):
+    # takes instance of food_item and a list of ids of tags
+    for tag in tags:
+        tag_obj = Tags.objects.filter(id=tag)
+        if tag_obj.exists():
+            food_item.tags.add(tag_obj[0])
