@@ -1,4 +1,4 @@
-from django.db.models.signals import m2m_changed, pre_delete
+from django.db.models.signals import m2m_changed, pre_delete, post_save
 from django.dispatch import receiver
 from .models import Order
 
@@ -14,7 +14,13 @@ def update_total_cost(sender, instance, action, **kwargs):
         instance.save()
 
 
-@receiver(pre_delete, sender=Order)
+# @receiver(pre_delete, sender=Order)
+# def delete_order_items(sender, instance, **kwargs):
+#     for order_item in instance.order_items.all():
+#         order_item.delete()
+
+@receiver(post_save, sender=Order)
 def delete_order_items(sender, instance, **kwargs):
     for order_item in instance.order_items.all():
-        order_item.delete()
+        order_item.ordered = True
+        order_item.save()
