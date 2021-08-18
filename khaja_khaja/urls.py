@@ -24,7 +24,11 @@ urlpatterns = [
     path('api/', include('user.urls')),
     path('api/', include('restaurant.urls')),
     path('api/', include('cart.urls')),
+    path('api/', include('notification.urls')),
 
     path('api/token/', TokenObtainPairView.as_view(), name='get_token'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='refresh_token'),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] 
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

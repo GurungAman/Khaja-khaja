@@ -3,6 +3,7 @@ from django.db.models.signals import pre_save, pre_delete
 from django.dispatch import receiver
 from .models import Discount
 
+
 @receiver(pre_save, sender=Discount)
 def update_food_item_price(sender, instance, **kwargs):
     food_item = instance.food_item
@@ -17,7 +18,7 @@ def update_food_item_price(sender, instance, **kwargs):
         raise ValidationError("Disocunt shouldn't be greater than total cost.")
     food_item.price = food_item_price
     food_item.save()
-    
+
 
 @receiver(pre_delete, sender=Discount)
 def reset_food_item_price(sender, instance, **kwargs):

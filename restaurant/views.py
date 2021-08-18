@@ -1,12 +1,21 @@
-import json
 from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import permission_classes, api_view
 from rest_framework.permissions import AllowAny
 from .models import Category, Tags, FoodItems, Restaurant, Discount
-from .serializers import CategorySerializer, TagsSerializer, RestaurantSerializer, UpdateRestaurantSerializer
-from .restaurant_utils import food_items_details, get_food_items, restaurant_details, add_tags_to_food_item
+from .serializers import (
+    CategorySerializer,
+    TagsSerializer,
+    RestaurantSerializer,
+    UpdateRestaurantSerializer
+)
+from .restaurant_utils import (
+    food_items_details,
+    get_food_items,
+    restaurant_details,
+    add_tags_to_food_item
+)
 from permissions import IsRestaurantOrReadOnly
 from .decorators import restaurant_owner_only
 from user.serializers import CreateBaseUserSerializer
@@ -39,7 +48,8 @@ def register_restaurant(request):
         base_user_serializer = CreateBaseUserSerializer(
             data=customer_data['base_user'])
         restaurant_serializer = RestaurantSerializer(data=customer_data)
-        if restaurant_serializer.is_valid(raise_exception=False) and base_user_serializer.is_valid(raise_exception=False):
+        if restaurant_serializer.is_valid(raise_exception=False) and \
+                base_user_serializer.is_valid(raise_exception=False):
             base_user_serializer.save(customer_data['base_user'])
             data = restaurant_serializer.data
             restaurant_serializer.save(data)
@@ -48,7 +58,7 @@ def register_restaurant(request):
         else:
             response['error'] = restaurant_serializer.errors
     except Exception as e:
-        response['error'] = f"{e.__class__.__name__}"
+        response['error'] = {f"{e.__class__.__name__}": f"{e}"}
     return Response(response)
 
 
@@ -66,7 +76,7 @@ def restaurant_detail(request, pk):
         else:
             response['error'] = f'Restaurant {restaurant.name} is not active'
     except Exception as e:
-        response['error'] = f"{e.__class__.__name__}"
+        response['error'] = {f"{e.__class__.__name__}": f"{e}"}
     return Response(response)
 
 
@@ -98,7 +108,7 @@ class RestaurantList(APIView):
             else:
                 self.response['error'] = restaurant_serializer.errors
         except Exception as e:
-            self.response['error'] = f"{e.__class__.__name__}"
+            self.response['error'] = {f"{e.__class__.__name__}": f"{e}"}
         return Response(self.response)
 
     def delete(self, request):
@@ -109,7 +119,7 @@ class RestaurantList(APIView):
             restaurant.save()
             self.response['status'] = True
         except Exception as e:
-            self.response['error'] = f"{e.__class__.__name__}"
+            self.response['error'] = {f"{e.__class__.__name__}": f"{e}"}
         return Response(self.response)
 
 
@@ -127,7 +137,7 @@ class CategoryList(APIView):
             self.response['category'] = category_serializer.data
             self.response['status'] = True
         except Exception as e:
-            self.response['error'] = f'{e.__class__.__name__}'
+            self.response['error'] = {f"{e.__class__.__name__}": f"{e}"}
         return Response(self.response)
 
     def post(self, request):
@@ -140,7 +150,9 @@ class CategoryList(APIView):
             else:
                 self.response['error'] = category_serializer.errors
         except Exception as e:
-            self.response['error'] = f'{e.__class__.__name__}'
+            self.response['error'] = {
+                f"{e.__class__.__name__}": f"{e}"
+            }
         return Response(self.response)
 
     def delete(self, request):
@@ -150,7 +162,9 @@ class CategoryList(APIView):
             category.delete()
             self.response['status'] = True
         except Exception as e:
-            self.response['error'] = f"{e.__class__.__name__}"
+            self.response['error'] = {
+                f"{e.__class__.__name__}": f"{e}"
+            }
         return Response(self.response)
 
 
@@ -167,7 +181,7 @@ class TagsList(APIView):
             self.response['tag'] = tags_serializer.data
             self.response['status'] = True
         except Exception as e:
-            self.response['error'] = f'{e.__class__.__name__}'
+            self.response['error'] = {f"{e.__class__.__name__}": f"{e}"}
         return Response(self.response)
 
     def post(self, request):
@@ -180,7 +194,7 @@ class TagsList(APIView):
             else:
                 self.response['error'] = tags_serializer.errors
         except Exception as e:
-            self.response['error'] = f'{e.__class__.__name__}'
+            self.response['error'] = {f"{e.__class__.__name__}": f"{e}"}
         return Response(self.response)
 
     def delete(self, request):
@@ -322,7 +336,8 @@ class FoodItemDetail(APIView):
             food_item_name = food_item.name
             food_item.delete()
             self.response['status'] = True
-            self.response['message'] = f"{food_item_name} successsfully deleted."
+            self.response['message'] = f"{food_item_name} \
+                                         successsfully deleted."
         except Exception as e:
             self.response['error'] = f"{e.__class__.__name__}"
         return Response(self.response)
@@ -347,18 +362,19 @@ class DiscountView(APIView):
         data = request.data
         try:
             food_item = FoodItems.objects.get(id=data['food_item_id'])
-            discount = Discount.objects.create(
+            Discount.objects.create(
                 discount_type=data['discount']['discount_type'],
                 discount_amount=data['discount']['discount_amount'],
                 food_item=food_item
             )
             food_item_name = food_item.name
-            self.response['message'] = f"Discount for {food_item_name}created successfully."
+            self.response['message'] = f"Discount \
+                                    for {food_item_name} created successfully."
             self.response['status'] = True
         except Exception as e:
-            self.response['error'] ={
-                f"{e.__class__.__name__}": e 
-            } 
+            self.response['error'] = {
+                f"{e.__class__.__name__}": e
+            }
         return Response(self.response)
 
     @restaurant_owner_only

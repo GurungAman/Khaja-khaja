@@ -1,6 +1,7 @@
 from django.db.models.signals import m2m_changed, pre_delete, post_save
 from django.dispatch import receiver
 from .models import Order
+from notification.models import Notification
 
 
 @receiver(m2m_changed, sender=Order.order_items.through)
@@ -20,7 +21,12 @@ def update_total_cost(sender, instance, action, **kwargs):
 #         order_item.delete()
 
 @receiver(post_save, sender=Order)
-def delete_order_items(sender, instance, **kwargs):
+def update_order_items_status(sender, instance, **kwargs):
     for order_item in instance.order_items.all():
+        restaurant = order_item.food_item.restaurant
+        Notification.objects.create(
+            user=restaurant,
+            order_item=order_item
+        )
         order_item.ordered = True
         order_item.save()

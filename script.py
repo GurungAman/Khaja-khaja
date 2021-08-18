@@ -1,11 +1,10 @@
 import string
-from random import random, randint, choices
+from random import randint, choices
 from user.models import Customer
 from restaurant.models import Restaurant,  Tags, Category, FoodItems
 from django.contrib.auth import get_user_model
 from faker import Faker
-from user.models import Customer
-from cart.models import OrderItem, Order
+from cart.models import OrderItem
 
 User = get_user_model()
 

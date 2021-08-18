@@ -20,17 +20,19 @@ class OrderItemSerializer(serializers.ModelSerializer):
         order_item, created = OrderItem.objects.get_or_create(
             user=customer,
             food_item=food_item,
-            quantity=validated_data['quantity'],
-            ordered = False
+            ordered=False
         )
         if not created:
             order_item.quantity += validated_data['quantity']
-            order_item.save()
+        else:
+            order_item.quantity = validated_data['quantity']
+        order_item.save()
         return order_item
 
 
 class OrderSerializer(serializers.ModelSerializer):
     shipping_address = serializers.CharField(required=False)
+    order_items = serializers.CharField(required=False)
 
     class Meta:
         model = Order
@@ -44,12 +46,14 @@ class OrderSerializer(serializers.ModelSerializer):
         order, _ = Order.objects.get_or_create(
             user=customer,
             shipping_address=address,
-            order_status = None
+            order_status=None
         )
-        for order_item in validated_data['order_items']:
-            item = OrderItem.objects.get(id=order_item)
-            if item.user == customer:
-                order.order_items.add(item)
+        order_items = OrderItem.objects.filter(user=customer, ordered=False)
+        if not order_items.exists():
+            raise ValidationError("Empty cart")
+        for order_item in order_items:
+            if order_item.user == customer:
+                order.order_items.add(order_item)
             else:
                 raise PermissionError("You do not own this order item.")
         return order

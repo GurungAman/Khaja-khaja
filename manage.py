@@ -9,9 +9,11 @@ def main():
     """Run administrative tasks."""
 
     if config('environment') == 'dev':
-        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'khaja_khaja.settings.developement')
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE',
+                              'khaja_khaja.settings.developement')
     elif config('environment') == 'prod':
-        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'khaja_khaja.settings.production')
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE',
+                              'khaja_khaja.settings.production')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

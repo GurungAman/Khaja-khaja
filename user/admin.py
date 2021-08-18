@@ -8,4 +8,3 @@ admin.site.unregister(Group)
 admin.site.register(CustomUser, CustomUserAdmin)
 
 admin.site.register(Customer)
-

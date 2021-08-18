@@ -1,12 +1,13 @@
 from django import forms
-from django.contrib.auth.forms import  UserCreationForm
-from user.models import CustomUser, Customer
+from user.models import CustomUser
 from django.core.exceptions import ValidationError
+
 
 class RegistrationAdminForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput)
-    password_2 = forms.CharField(label='Confirm Password', widget=forms.PasswordInput)
-    
+    password_2 = forms.CharField(
+        label='Confirm Password', widget=forms.PasswordInput)
+
     class Meta:
         model = CustomUser
         fields = ('email', 'password', 'password_2', )
@@ -25,4 +26,3 @@ class RegistrationAdminForm(forms.ModelForm):
         if commit:
             user.save()
         return user
-

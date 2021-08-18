@@ -4,6 +4,7 @@ from user.forms import RegistrationAdminForm
 
 User = get_user_model()
 
+
 class CustomUserAdmin(UserAdmin):
 
     add_form = RegistrationAdminForm
@@ -11,14 +12,15 @@ class CustomUserAdmin(UserAdmin):
     list_display = ('email', 'admin', )
     ordering = ('email',)
     search_fields = ('email', 'primary_phone_number')
-    readonly_fields = ['date_joined', 'last_login',]
+    readonly_fields = ['date_joined', 'last_login', ]
     filter_horizontal = ()
     list_filter = ()
 
     fieldsets = (
         (None, {'fields': ('email', 'primary_phone_number', 'password',)}),
         (('Permissions'), {
-            'fields': ('is_active', 'staff', 'admin', 'is_customer', 'is_restaurant', 'user_permissions',),
+            'fields': ('is_active', 'staff', 'admin', 'is_customer',
+                       'is_restaurant', 'user_permissions',),
         }),
         (('Dates'), {'fields': ('last_login', 'date_joined')}),
     )

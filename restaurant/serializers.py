@@ -1,20 +1,22 @@
-from django.contrib.auth import  get_user_model
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from .models import Category, Tags, FoodItems, Restaurant
 from user.serializers import CreateBaseUserSerializer
 
 User = get_user_model()
 
+
 class CategorySerializer(serializers.ModelSerializer):
-     class Meta:
-         model = Category
-         fields = '__all__'
+    class Meta:
+        model = Category
+        fields = '__all__'
 
 
 class TagsSerializer(serializers.ModelSerializer):
-     class Meta:
-         model = Tags
-         fields = '__all__'
+    class Meta:
+        model = Tags
+        fields = '__all__'
+
 
 class FoodItemsSerializer(serializers.ModelSerializer):
     class Meta:
@@ -32,15 +34,16 @@ class RestaurantSerializer(serializers.ModelSerializer):
 
     def save(self, validated_data):
         base_user = dict(validated_data.pop('base_user'))
-        user = User.objects.get(email = base_user['email'])
+        user = User.objects.get(email=base_user['email'])
         restaurant = Restaurant.objects.create(
-            restaurant = user,
-            name = validated_data['name'],
-            logo = validated_data.get('logo'),
-            license_number = validated_data['license_number'],
-            address = validated_data['address'],
-            secondary_phone_number = validated_data.get('secondary_phone_number'),
-            bio = validated_data.get('bio'),
+            restaurant=user,
+            name=validated_data['name'],
+            logo=validated_data.get('logo'),
+            license_number=validated_data['license_number'],
+            address=validated_data['address'],
+            secondary_phone_number=validated_data.get(
+                'secondary_phone_number'),
+            bio=validated_data.get('bio'),
         )
         return restaurant
 
@@ -52,7 +55,8 @@ class UpdateRestaurantSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Restaurant
-        fields = ('name', 'logo', 'license_number', 'secondary_phone_number', 'address', 'bio')
+        fields = ('name', 'logo', 'license_number',
+                  'secondary_phone_number', 'address', 'bio')
 
     def update(self, instance, validated_data):
         if validated_data.get('name'):
@@ -62,7 +66,8 @@ class UpdateRestaurantSerializer(serializers.ModelSerializer):
         if validated_data.get('license_number'):
             instance.license_number = validated_data['license_number']
         if validated_data.get('secondary_phone_number'):
-            instance.secondary_phone_number = validated_data['secondary_phone_number']
+            phone_number = validated_data['secondary_phone_number']
+            instance.secondary_phone_number = phone_number
         if validated_data.get('address'):
             instance.address = validated_data['address']
         if validated_data.get('bio'):

@@ -7,6 +7,8 @@ from django.conf import settings
 
 # Custom Base user
 # Will be used to extend user models to restaurant and customers
+
+
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     primary_phone_number = models.CharField(max_length=10)
@@ -46,7 +48,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
 class Customer(models.Model):
     customer = models.OneToOneField(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='customer')
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE, related_name='customer')
     first_name = models.CharField(max_length=50)
     middle_name = models.CharField(max_length=50, blank=True)
     last_name = models.CharField(max_length=50)
@@ -61,7 +64,8 @@ class Customer(models.Model):
 
     def save(self, *args, **kwargs):
         customer = self.customer
-        # customer is inactive and can only use app after verifying through mail
+        # customer is inactive and can only use app after
+        #  verifying through mail
         # will be added later
         customer.is_customer = True
         customer.is_restaurant = False

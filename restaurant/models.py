@@ -6,7 +6,8 @@ from django.conf import settings
 
 class Restaurant(models.Model):
     restaurant = models.OneToOneField(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='restaurant')
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE, related_name='restaurant')
     name = models.CharField(max_length=100)
     logo = models.ImageField(upload_to='restaurant/logo/', blank=True)
     license_number = models.CharField(max_length=20)
@@ -43,7 +44,8 @@ class FoodItems(models.Model):
     restaurant = models.ForeignKey(
         Restaurant, on_delete=models.CASCADE, related_name='restaurant_item')
     category = models.ForeignKey(
-        Category, related_name='category', on_delete=models.SET_NULL, null=True)
+        Category, related_name='category',
+        on_delete=models.SET_NULL, null=True)
     tags = models.ManyToManyField(Tags, related_name='tags', blank=True)
     name = models.CharField(max_length=100)
     image = models.ImageField(upload_to='restaurant/food/', blank=True)
