@@ -15,18 +15,14 @@ def update_total_cost(sender, instance, action, **kwargs):
         instance.save()
 
 
-# @receiver(pre_delete, sender=Order)
-# def delete_order_items(sender, instance, **kwargs):
-#     for order_item in instance.order_items.all():
-#         order_item.delete()
-
-@receiver(post_save, sender=Order)
-def update_order_items_status(sender, instance, **kwargs):
+@receiver(pre_delete, sender=Order)
+def delete_order_items(sender, instance, **kwargs):
     for order_item in instance.order_items.all():
-        restaurant = order_item.food_item.restaurant
-        Notification.objects.create(
-            user=restaurant,
-            order_item=order_item
-        )
-        order_item.ordered = True
-        order_item.save()
+        order_item.delete()
+
+
+# @receiver(post_save, sender=Order)
+# def update_order_items_status(sender, instance, **kwargs):
+#     for order_item in instance.order_items.all():
+#         order_item.ordered = True
+#         order_item.save()

@@ -7,11 +7,12 @@ from permissions import IsRestaurantOnly
 
 # Create your views here.
 
+
 class NotificationDetail(APIView):
     permission_classes = [IsRestaurantOnly]
-    response = {'status': False}
 
     def get(self, request):
+        response = {'status': False}
         user = request.user.restaurant
         try:
             notifications = Notification.objects.filter(
@@ -19,39 +20,41 @@ class NotificationDetail(APIView):
             if notifications.exists():
                 notifications_serializer = NotificationsSerializer(
                     notifications, many=True)
-                self.response['notifications'] = notifications_serializer.data
+                response['notifications'] = notifications_serializer.data
             else:
-                self.response['notifications'] = "You do not have any notifications"
-            self.response['status'] = True
+                response['notifications'] = "You do \
+                                                not have any notifications"
+            response['status'] = True
 
         except Exception as e:
-            self.response['error'] = {
+            response['error'] = {
                 f"{e.__class__.__name__}": f"{e}"
             }
-        return Response(self.response)
+        return Response(response)
 
     def delete(self, request):
+        response = {'status': False}
         user = request.user.restaurant
         data = request.data
         try:
             for notification_id in data["notification_ids"]:
-                notification = Notification.objects.get(id = notification_id)
+                notification = Notification.objects.get(id=notification_id)
                 if notification.user != user:
                     raise PermissionError("This notification is not for you")
                 notification.delete()
-            self.response['status'] = True
+            response['status'] = True
         except Exception as e:
-            self.response['error'] = {
+            response['error'] = {
                 f"{e.__class__.__name__}": f"{e}"
             }
-        return Response(self.response)
+        return Response(response)
 
 
 @api_view(['POST'])
 @permission_classes([IsRestaurantOnly])
 def mark_all_notifications_as_read(request):
     user = request.user.restaurant
-    response = {"status" : False}
+    response = {"status": False}
     try:
         notifications = Notification.objects.filter(
             user=user, status="U").order_by('-created_at')
@@ -73,7 +76,7 @@ def mark_a_notification_as_read(request, pk):
     user = request.user.restaurant
     response = {"status": False}
     try:
-        notification = Notification.objects.get(id = pk)
+        notification = Notification.objects.get(id=pk)
         if notification.user != user:
             raise PermissionError("This notification is not for you")
         notification.status = "R"

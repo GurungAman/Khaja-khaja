@@ -22,10 +22,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
             food_item=food_item,
             ordered=False
         )
-        if not created:
-            order_item.quantity += validated_data['quantity']
-        else:
-            order_item.quantity = validated_data['quantity']
+        order_item.quantity = validated_data['quantity']
         order_item.save()
         return order_item
 

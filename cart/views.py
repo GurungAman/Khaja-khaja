@@ -9,23 +9,21 @@ from .cart_utils import order_details, order_items_details
 
 
 class OrderItemDetail(APIView):
-    response = {
-        'status': False
-    }
     permission_classes = [IsCustomerOnly]
 
     def get(self, request):
+        response = {'status': False}
         user = request.user.customer
         try:
             order_items = OrderItem.objects.filter(user=user, ordered=False)
             order_item_detail = order_items_details(order_items)
-            self.response['status'] = True
-            self.response['order_items'] = order_item_detail
+            response['status'] = True
+            response['order_items'] = order_item_detail
         except Exception as e:
-            self.response['error'] = {
+            response['error'] = {
                 f"{e.__class__.__name__}": f"{e}"
             }
-        return Response(self.response)
+        return Response(response)
 
     def post(self, request):
         """
@@ -34,31 +32,47 @@ class OrderItemDetail(APIView):
             "quantity": 3
         }
         """
+        response = {'status': False}
         data = request.data
         data['user'] = request.user.customer.pk
         try:
             order_item = OrderItemSerializer(data=data)
             if order_item.is_valid(raise_exception=False):
                 order_items = order_item.save(validated_data=data)
-                self.response['status'] = True
-                self.response['order_item'] = order_items_details(
+                response['status'] = True
+                response['order_item'] = order_items_details(
                     [order_items])
             else:
-                self.response['error'] = order_item.errors
+                response['error'] = order_item.errors
         except Exception as e:
-            self.response['error'] = {
+            response['error'] = {
+                f"{e.__class__.__name__}": f"{e} oasdk"
+            }
+        return Response(response)
+
+    def delete(self, request):
+        response = {'status': False}
+        data = request.data
+        user = request.user.customer
+        try:
+            for order_item_id in data['order_items_ids']:
+                order_item = OrderItem.objects.get(id=order_item_id)
+                if user != order_item.user:
+                    raise PermissionError("Permission denied.")
+                order_item.delete()
+            response['status'] = True
+        except Exception as e:
+            response['error'] = {
                 f"{e.__class__.__name__}": f"{e}"
             }
-        return Response(self.response)
+        return Response(response)
 
 
 class OrderDetail(APIView):
-    response = {
-        'status': False
-    }
     permission_classes = [IsCustomerOnly]
 
     def get(self, request):
+        response = {'status': False}
         user = request.user.customer
         try:
             order = Order.objects.filter(
@@ -66,46 +80,46 @@ class OrderDetail(APIView):
                 order_status=None
             )
             if not order.exists():
-                self.response['order_item'] = "You have not \
-                                                made any orders yet"
+                response['order_detail'] = "You have not \
+                    made any orders yet"
             else:
-                self.response['order_item'] = order_details(order[0])
-                self.response['status'] = True
+                response['order_detail'] = order_details(order[0])
+                response['status'] = True
         except Exception as e:
-            self.response['error'] = {
+            response['error'] = {
                 f"{e.__class__.__name__}": f"{e}"
             }
-        return Response(self.response)
+        return Response(response)
 
     def post(self, request):
+        response = {'status': False}
         data = request.data
         data['user'] = request.user.customer.pk
         try:
             order_serializer = OrderSerializer(data=data)
             if order_serializer.is_valid(raise_exception=False):
                 order = order_serializer.save(validated_data=data)
-                self.response['status'] = True
-                self.response['order'] = order_details(order)
-                self.response['order']['total_cost'] = order.total_cost
+                response['status'] = True
+                response['order'] = order_details(order)
             else:
-                self.response['error'] = order_serializer.errors
+                response['error'] = order_serializer.errors
         except Exception as e:
-            self.response['error'] = {
+            response['error'] = {
                 f"{e.__class__.__name__}": f"{e}"
             }
-        return Response(self.response)
+        return Response(response)
 
     def delete(self, request):
-        data = request.data
+        response = {'status': False}
         user = request.user.customer
         try:
-            order = Order.objects.get(id=data['order_id'])
-            if user != order.user:
-                raise PermissionError("Permission denied.")
+            order = Order.objects.get(
+                user=user,
+                order_status=None)
             order.delete()
-            self.response['status'] = True
+            response['status'] = True
         except Exception as e:
-            self.response['error'] = {
+            response['error'] = {
                 f"{e.__class__.__name__}": f"{e}"
             }
-        return Response(self.response)
+        return Response(response)

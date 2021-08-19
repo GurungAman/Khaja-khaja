@@ -9,14 +9,14 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
+        ('notification', '0001_initial'),
         ('restaurant', '0001_initial'),
-        ('cart', '0001_initial'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='orderitem',
-            name='food_item',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='food_item', to='restaurant.fooditems'),
+            model_name='notification',
+            name='user',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='restaurant.restaurant'),
         ),
     ]

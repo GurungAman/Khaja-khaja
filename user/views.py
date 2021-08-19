@@ -57,19 +57,17 @@ def register_customer(request):
 class CustomerDetails(APIView):
 
     permission_classes = [IsCustomerOnly]
-    response = {
-        'status': False
-    }
 
     def get(self, request):
         user = request.user
+        response = {'status': False}
         try:
             customer = customer_details(email=user)
-            self.response['user_details'] = customer
-            self.response['status'] = True
+            response['user_details'] = customer
+            response['status'] = True
         except Exception as e:
-            self.response['error'] = {f"{e.__class__.__name__}": f"{e}"}
-        return Response(self.response)
+            response['error'] = {f"{e.__class__.__name__}": f"{e}"}
+        return Response(response)
 
     def put(self, request):
         # {
@@ -81,28 +79,30 @@ class CustomerDetails(APIView):
         # }
         user = request.user
         data = request.data
+        response = {'status': False}
         try:
             customer = Customer.objects.get(customer=user)
             customer_serializer = UpdateCustomerSerializer(data=data)
             if customer_serializer.is_valid(raise_exception=False):
                 customer_serializer.update(
                     instance=customer, validated_data=data)
-                self.response['user_details'] = customer_details(
+                response['user_details'] = customer_details(
                     email=user.email)
-                self.response['status'] = True
+                response['status'] = True
             else:
-                self.response['error'] = customer_serializer.errors
+                response['error'] = customer_serializer.errors
         except Exception as e:
-            self.response['error'] = f"{e.__class__.__name__ }"
-        return Response(self.response)
+            response['error'] = f"{e.__class__.__name__ }"
+        return Response(response)
 
     def delete(self, request):
         user = request.user
+        response = {'status': False}
         try:
             customer = Customer.objects.get(customer=user)
             customer.is_active = False
             customer.save()
-            self.response['status'] = True
+            response['status'] = True
         except Exception as e:
-            self.response['error'] = {f"{e.__class__.__name__}": f"{e}"}
-        return Response(self.response)
+            response['error'] = {f"{e.__class__.__name__}": f"{e}"}
+        return Response(response)

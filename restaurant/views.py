@@ -81,20 +81,19 @@ def restaurant_detail(request, pk):
 
 
 class RestaurantList(APIView):
-    response = {
-        'status': False,
-    }
     permission_classes = [IsRestaurantOrReadOnly]
 
     def get(self, request):
+        response = {'status': False}
         try:
             restaurants = Restaurant.objects.filter(restaurant__is_active=True)
-            self.response['restaurant'] = restaurant_details(restaurants)
+            response['restaurant'] = restaurant_details(restaurants)
         except Exception as e:
-            self.response['error'] = f"{e.__class__.__name__}"
-        return Response(self.response)
+            response['error'] = f"{e.__class__.__name__}"
+        return Response(response)
 
     def put(self, request):
+        response = {'status': False}
         user = request.user
         data = request.data
         try:
@@ -103,119 +102,114 @@ class RestaurantList(APIView):
             if restaurant_serializer.is_valid(raise_exception=False):
                 restaurant_serializer.save(
                     instance=restaurant, validated_data=data)
-                self.response['restaurant'] = restaurant_details([restaurant])
-                self.response['status'] = True
+                response['restaurant'] = restaurant_details([restaurant])
+                response['status'] = True
             else:
-                self.response['error'] = restaurant_serializer.errors
+                response['error'] = restaurant_serializer.errors
         except Exception as e:
-            self.response['error'] = {f"{e.__class__.__name__}": f"{e}"}
-        return Response(self.response)
+            response['error'] = {f"{e.__class__.__name__}": f"{e}"}
+        return Response(response)
 
     def delete(self, request):
+        response = {'status': False}
         user = request.user
         try:
             restaurant = Restaurant.objects.get(restaurant=user)
             restaurant.restaurant.is_active = False
             restaurant.save()
-            self.response['status'] = True
+            response['status'] = True
         except Exception as e:
-            self.response['error'] = {f"{e.__class__.__name__}": f"{e}"}
-        return Response(self.response)
+            response['error'] = {f"{e.__class__.__name__}": f"{e}"}
+        return Response(response)
 
 
 class CategoryList(APIView):
     # create, delete category and get all categories
     permission_classes = [IsRestaurantOrReadOnly]
-    response = {
-        'status': False
-    }
 
     def get(self, request):
+        response = {'status': False}
         try:
             categories = Category.objects.all()
             category_serializer = CategorySerializer(categories, many=True)
-            self.response['category'] = category_serializer.data
-            self.response['status'] = True
+            response['category'] = category_serializer.data
+            response['status'] = True
         except Exception as e:
-            self.response['error'] = {f"{e.__class__.__name__}": f"{e}"}
-        return Response(self.response)
+            response['error'] = {f"{e.__class__.__name__}": f"{e}"}
+        return Response(response)
 
     def post(self, request):
+        response = {'status': False}
         try:
             category_serializer = CategorySerializer(data=request.data)
             if category_serializer.is_valid(raise_exception=False):
                 category_serializer.save()
-                self.response['status'] = True
-                self.response['category'] = category_serializer.data
+                response['status'] = True
+                response['category'] = category_serializer.data
             else:
-                self.response['error'] = category_serializer.errors
+                response['error'] = category_serializer.errors
         except Exception as e:
-            self.response['error'] = {
-                f"{e.__class__.__name__}": f"{e}"
-            }
-        return Response(self.response)
+            response['error'] = {f"{e.__class__.__name__}": f"{e}"}
+        return Response(response)
 
     def delete(self, request):
+        response = {'status': False}
         try:
             category = Category.objects.get(name=request.data['name'])
-            self.response['message'] = f"{category} successfully deleted"
+            response['message'] = f"{category} successfully deleted"
             category.delete()
-            self.response['status'] = True
+            response['status'] = True
         except Exception as e:
-            self.response['error'] = {
-                f"{e.__class__.__name__}": f"{e}"
-            }
-        return Response(self.response)
+            response['error'] = {f"{e.__class__.__name__}": f"{e}"}
+        return Response(response)
 
 
 class TagsList(APIView):
     permission_classes = [IsRestaurantOrReadOnly]
-    response = {
-        'status': False
-    }
 
     def get(self, request):
+        response = {'status': False}
         try:
             tags = Tags.objects.all()
             tags_serializer = TagsSerializer(tags, many=True)
-            self.response['tag'] = tags_serializer.data
-            self.response['status'] = True
+            response['tag'] = tags_serializer.data
+            response['status'] = True
         except Exception as e:
-            self.response['error'] = {f"{e.__class__.__name__}": f"{e}"}
-        return Response(self.response)
+            response['error'] = {f"{e.__class__.__name__}": f"{e}"}
+        return Response(response)
 
     def post(self, request):
+        response = {'status': False}
         try:
             tags_serializer = TagsSerializer(data=request.data)
             if tags_serializer.is_valid(raise_exception=False):
                 tags_serializer.save()
-                self.response['status'] = True
-                self.response['tag'] = tags_serializer.data
+                response['status'] = True
+                response['tag'] = tags_serializer.data
             else:
-                self.response['error'] = tags_serializer.errors
+                response['error'] = tags_serializer.errors
         except Exception as e:
-            self.response['error'] = {f"{e.__class__.__name__}": f"{e}"}
-        return Response(self.response)
+            response['error'] = {f"{e.__class__.__name__}": f"{e}"}
+        return Response(response)
 
     def delete(self, request):
+        response = {'status': False}
         try:
             tag = Tags.objects.get(name=request.data['name'])
-            self.response['message'] = f"{tag} successfully deleted"
+            response['message'] = f"{tag} successfully deleted"
             tag.delete()
-            self.response['status'] = True
+            response['status'] = True
         except Exception as e:
-            self.response['error'] = f"{e.__class__.__name__}"
-        return Response(self.response)
+            response['error'] = f"{e.__class__.__name__}"
+        return Response(response)
 
 
 class FoodItemsList(APIView):
     permission_classes = [IsRestaurantOrReadOnly]
-    response = {
-        'status': False
-    }
 
     def get(self, request):
         data = request.data
+        response = {'status': False}
         user = request.user
         try:
             if user.is_anonymous or user.is_customer:
@@ -242,11 +236,11 @@ class FoodItemsList(APIView):
                 discounted_food_items = Discount.objects.filter()
                 food_items = [item.food_item for item in discounted_food_items]
                 print(food_items)
-            self.response['food_items'] = food_items_details(food_items)
-            self.response['status'] = True
+            response['food_items'] = food_items_details(food_items)
+            response['status'] = True
         except Exception as e:
-            self.response['error'] = f"{e.__class__.__name__}"
-        return Response(self.response)
+            response['error'] = {f"{e.__class__.__name__}": f"{e}"}
+        return Response(response)
 
     def post(self, request):
         # {
@@ -258,6 +252,7 @@ class FoodItemsList(APIView):
         #     "is_available": true
         # }
         data = request.data
+        response = {'status': False}
         user = request.user
         try:
             category = Category.objects.get(id=data['category'])
@@ -269,31 +264,30 @@ class FoodItemsList(APIView):
                 price=data['price'],
             )
             add_tags_to_food_item(food_item, data['tags'])
-            self.response['food_item'] = food_items_details([food_item])
-            self.response['status'] = True
+            response['food_item'] = food_items_details([food_item])
+            response['status'] = True
         except Exception as e:
-            self.response['error'] = f"{e.__class__.__name__}"
-        return Response(self.response)
+            response['error'] = {f"{e.__class__.__name__}": f"{e}"}
+        return Response(response)
 
 
 class FoodItemDetail(APIView):
     permission_classes = [IsRestaurantOrReadOnly]
-    response = {
-        'status': False
-    }
 
     def get(self, request, pk):
+        response = {'status': False}
         try:
             food_item = FoodItems.objects.get(id=pk)
-            self.response['food_item'] = food_items_details([food_item])
-            self.response['status'] = True
+            response['food_item'] = food_items_details([food_item])
+            response['status'] = True
         except Exception as e:
-            self.response['error'] = f"{e.__class__.__name__}"
-        return Response(self.response)
+            response['error'] = {f"{e.__class__.__name__}": f"{e}"}
+        return Response(response)
 
     @restaurant_owner_only
     def put(self, request, pk):
         data = request.data
+        response = {'status': False}
         try:
             food_item = FoodItems.objects.get(id=pk)
             if data.get('category'):
@@ -323,32 +317,29 @@ class FoodItemDetail(APIView):
                         if tag_obj.exists():
                             food_item.tags.remove(tag_obj[0])
             food_item.save()
-            self.response['food_item'] = food_items_details([food_item])
-            self.response['status'] = True
+            response['food_item'] = food_items_details([food_item])
+            response['status'] = True
         except Exception as e:
-            self.response['error'] = f"{e}"
-        return Response(self.response)
+            response['error'] = f"{e}"
+        return Response(response)
 
     @restaurant_owner_only
     def delete(self, request, pk):
+        response = {'status': False}
         try:
             food_item = FoodItems.objects.get(id=pk)
             food_item_name = food_item.name
             food_item.delete()
-            self.response['status'] = True
-            self.response['message'] = f"{food_item_name} \
+            response['status'] = True
+            response['message'] = f"{food_item_name} \
                                          successsfully deleted."
         except Exception as e:
-            self.response['error'] = f"{e.__class__.__name__}"
-        return Response(self.response)
+            response['error'] = {f"{e.__class__.__name__}": f"{e}"}
+        return Response(response)
 
 
 class DiscountView(APIView):
-
     permission_classes = [IsRestaurantOrReadOnly]
-    response = {
-        'status': False
-    }
 
     @restaurant_owner_only
     def post(self, request):
@@ -360,6 +351,7 @@ class DiscountView(APIView):
         #     }
         # }
         data = request.data
+        response = {'status': False}
         try:
             food_item = FoodItems.objects.get(id=data['food_item_id'])
             Discount.objects.create(
@@ -368,18 +360,17 @@ class DiscountView(APIView):
                 food_item=food_item
             )
             food_item_name = food_item.name
-            self.response['message'] = f"Discount \
+            response['message'] = f"Discount \
                                     for {food_item_name} created successfully."
-            self.response['status'] = True
+            response['status'] = True
         except Exception as e:
-            self.response['error'] = {
-                f"{e.__class__.__name__}": e
-            }
-        return Response(self.response)
+            response['error'] = {f"{e.__class__.__name__}": f"{e}"}
+        return Response(response)
 
     @restaurant_owner_only
     def put(self, request):
         data = request.data
+        response = {'status': False}
         try:
             discount = Discount.objects.get(food_item__id=data['food_item_id'])
             if data.get('discount_type'):
@@ -387,20 +378,19 @@ class DiscountView(APIView):
             if data.get('amount'):
                 discount.discount_amount = data['discount_amount']
             discount.save()
-            self.response['status'] = True
+            response['status'] = True
         except Exception as e:
-            self.response['error'] = {
-                f"{e.__class__.__name__}": e
-            }
-        return Response(self.response)
+            response['error'] = {f"{e.__class__.__name__}": f"{e}"}
+        return Response(response)
 
     @restaurant_owner_only
     def delete(self, request):
         data = request.data
+        response = {'status': False}
         try:
             discount = Discount.objects.get(food_item__id=data['food_item_id'])
             discount.delete()
-            self.response['status'] = True
+            response['status'] = True
         except Exception as e:
-            self.response['error'] = f"{e.__class__.__name__}"
-        return Response(self.response)
+            response['error'] = {f"{e.__class__.__name__}": f"{e}"}
+        return Response(response)

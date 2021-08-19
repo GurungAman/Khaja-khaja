@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 # Create your models here.
 
@@ -9,7 +10,8 @@ class Restaurant(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE, related_name='restaurant')
     name = models.CharField(max_length=100)
-    logo = models.ImageField(upload_to='restaurant/logo/', blank=True)
+    logo = models.ImageField(
+        upload_to='restaurant/logo/', blank=True, null=True)
     license_number = models.CharField(max_length=20)
     secondary_phone_number = models.CharField(blank=True, max_length=10)
     address = models.CharField(max_length=100)
@@ -19,6 +21,8 @@ class Restaurant(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
+        if self.logo and self.logo.file.size > settings.MAX_IMAGE_SIZE:
+            raise ValidationError("Image size should not be greater than 3MB.")
         restaurant = self.restaurant
         restaurant.is_customer = False
         restaurant.is_restaurant = True
