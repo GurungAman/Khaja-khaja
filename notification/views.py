@@ -22,8 +22,8 @@ class NotificationDetail(APIView):
                     notifications, many=True)
                 response['notifications'] = notifications_serializer.data
             else:
-                response['notifications'] = "You do \
-                                                not have any notifications"
+                response['notifications'] = "You do" \
+                                            "not have any notifications"
             response['status'] = True
 
         except Exception as e:
