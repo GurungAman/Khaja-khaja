@@ -1,4 +1,5 @@
 from django.db.models import Q
+from django.db import transaction
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import permission_classes, api_view
@@ -256,14 +257,15 @@ class FoodItemsList(APIView):
         user = request.user
         try:
             category = Category.objects.get(id=data['category'])
-            food_item = FoodItems.objects.create(
-                restaurant=user.restaurant,
-                category=category,
-                name=data['name'],
-                image=data.get('image'),
-                price=data['price'],
-            )
-            add_tags_to_food_item(food_item, data['tags'])
+            with transaction.atomic():
+                food_item = FoodItems.objects.create(
+                    restaurant=user.restaurant,
+                    category=category,
+                    name=data['name'],
+                    image=data.get('image'),
+                    price=data['price'],
+                )
+                add_tags_to_food_item(food_item, data['tags'])
             response['food_item'] = food_items_details([food_item])
             response['status'] = True
         except Exception as e:
@@ -289,34 +291,26 @@ class FoodItemDetail(APIView):
         data = request.data
         response = {'status': False}
         try:
-            food_item = FoodItems.objects.get(id=pk)
-            if data.get('category'):
-                category = Category.objects.get(id=data['category'])
-                food_item.category = category
-            if data.get('name'):
-                food_item.name = data['name']
-            if data.get('image'):
-                food_item.image = data['image']
-            if data.get('price'):
-                food_item.price = data['price']
-            if data.get('is_available'):
-                food_item.is_available = data['is_available']
-            if data.get('tags'):
-                # {
-                #     ...
-                #     "tags": None / {
-                #         "add_tags": None / [__ids__],
-                #         "remove_tags": None / [__ids__]
-                #         }
-                # }
-                if data['tags'].get('add_tags'):
-                    add_tags_to_food_item(food_item, data['tags']['add_tags'])
-                if data['tags'].get('remove_tags'):
-                    for tag in data['tags']['remove_tags']:
-                        tag_obj = Tags.objects.filter(id=tag)
-                        if tag_obj.exists():
-                            food_item.tags.remove(tag_obj[0])
-            food_item.save()
+            with transaction.atomic():
+                food_item = FoodItems.objects.get(id=pk)
+                if data.get('category'):
+                    category = Category.objects.get(id=data['category'])
+                    food_item.category = category
+                if data.get('name'):
+                    food_item.name = data['name']
+                if data.get('image'):
+                    food_item.image = data['image']
+                if data.get('price'):
+                    food_item.price = data['price']
+                if data.get('is_available'):
+                    food_item.is_available = data['is_available']
+                if data.get('add_tags'):
+                    add_tags_to_food_item(food_item, data['add_tags'])
+                if data.get('remove_tags'):
+                    for tag in data['remove_tags']:
+                        tag_obj = Tags.objects.get(id=tag)
+                        food_item.tags.remove(tag_obj)
+                food_item.save()
             response['food_item'] = food_items_details([food_item])
             response['status'] = True
         except Exception as e:
@@ -331,8 +325,8 @@ class FoodItemDetail(APIView):
             food_item_name = food_item.name
             food_item.delete()
             response['status'] = True
-            response['message'] = f"{food_item_name} \
-                                         successsfully deleted."
+            response['message'] = f"{food_item_name} " \
+                "successsfully deleted."
         except Exception as e:
             response['error'] = {f"{e.__class__.__name__}": f"{e}"}
         return Response(response)
@@ -342,9 +336,8 @@ class DiscountView(APIView):
     permission_classes = [IsRestaurantOrReadOnly]
 
     @restaurant_owner_only
-    def post(self, request):
+    def post(self, request, pk):
         # {
-        #     "food_item_id": 32,
         #     "discount": {
         #         "discount_type": "percentage",
         #         "discount_amount": 10.12
@@ -353,44 +346,47 @@ class DiscountView(APIView):
         data = request.data
         response = {'status': False}
         try:
-            food_item = FoodItems.objects.get(id=data['food_item_id'])
+            food_item = FoodItems.objects.get(id=pk)
             Discount.objects.create(
                 discount_type=data['discount']['discount_type'],
                 discount_amount=data['discount']['discount_amount'],
                 food_item=food_item
             )
             food_item_name = food_item.name
-            response['message'] = f"Discount \
-                                    for {food_item_name} created successfully."
+            response['message'] = "Discount " \
+                f"for {food_item_name} created successfully."
             response['status'] = True
         except Exception as e:
             response['error'] = {f"{e.__class__.__name__}": f"{e}"}
         return Response(response)
 
     @restaurant_owner_only
-    def put(self, request):
+    def put(self, request, pk):
         data = request.data
         response = {'status': False}
         try:
-            discount = Discount.objects.get(food_item__id=data['food_item_id'])
+            discount = Discount.objects.get(food_item__id=pk)
             if data.get('discount_type'):
                 discount.discount_type = data['discount_type']
             if data.get('amount'):
                 discount.discount_amount = data['discount_amount']
             discount.save()
             response['status'] = True
+            food_item_name = discount.food_item.name
+            response['message'] = "Discount " \
+                f"for {food_item_name} updated successfully."
         except Exception as e:
             response['error'] = {f"{e.__class__.__name__}": f"{e}"}
         return Response(response)
 
     @restaurant_owner_only
-    def delete(self, request):
-        data = request.data
+    def delete(self, request, pk):
         response = {'status': False}
         try:
-            discount = Discount.objects.get(food_item__id=data['food_item_id'])
+            discount = Discount.objects.get(food_item__id=pk)
             discount.delete()
             response['status'] = True
+            response['message'] = "Discount deleted successfully."
         except Exception as e:
             response['error'] = {f"{e.__class__.__name__}": f"{e}"}
         return Response(response)

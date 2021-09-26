@@ -5,6 +5,9 @@
 - After user pays for items, order status is set changed 'order created' from Null.
 - Notification for orderitem is sent to their corresponding restaurant.
 
+- user adds item to cart  ->  user selects payment options  ->  order created  -> notify respective restaurants  -> deliver orders
+
 ## Tings To do;
  - payment Integration 
  - send mail for vertififcation
+ - password change, reset

@@ -12,8 +12,8 @@ def restaurant_owner_only(func):
             if pk:
                 food_item = FoodItems.objects.get(id=pk)
                 if not user == food_item.restaurant:
-                    response['error'] = "You are not \
-                    authorized to make changes to this item."
+                    response['error'] = "You are not "\
+                        "authorized to make changes to this item."
                     return Response(response)
                 return func(self, request, pk, *args, **kwargs)
             else:

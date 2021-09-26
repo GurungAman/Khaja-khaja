@@ -80,8 +80,8 @@ class OrderDetail(APIView):
                 order_status=None
             )
             if not order.exists():
-                response['order_detail'] = "You have not \
-                    made any orders yet"
+                response['order_detail'] = "You have not " \
+                    "made any orders yet"
             else:
                 response['order_detail'] = order_details(order[0])
                 response['status'] = True

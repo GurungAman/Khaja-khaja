@@ -10,6 +10,7 @@ urlpatterns = [
     path('restaurant/food_items/tags/', views.TagsList.as_view(), ),
     path('restaurant/food_items/', views.FoodItemsList.as_view(), ),
     path('restaurant/food_items/<int:pk>', views.FoodItemDetail.as_view(), ),
-    path('restaurant/food_items/discount/', views.DiscountView.as_view(), ),
+    path('restaurant/food_items/<int:pk>/discount/',
+         views.DiscountView.as_view(), ),
 
 ]

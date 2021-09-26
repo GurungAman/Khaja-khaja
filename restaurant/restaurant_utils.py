@@ -55,6 +55,7 @@ def get_food_items(restaurants):
 def add_tags_to_food_item(food_item, tags):
     # takes instance of food_item and a list of ids of tags
     for tag in tags:
-        tag_obj = Tags.objects.filter(id=tag)
-        if tag_obj.exists():
-            food_item.tags.add(tag_obj[0])
+        tag_obj = Tags.objects.get(id=tag)
+        food_item.tags.add(tag_obj)
+        # if tag_obj.exists():
+        #     food_item.tags.add(tag_obj[0])
