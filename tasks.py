@@ -39,7 +39,7 @@ def verify_user_email(user, *args, **kwargs):
     access_token = AccessToken.for_user(user)
     access_token.set_exp(lifetime=timedelta(minutes=10))
     domain = kwargs.get('domain')
-    relative_link = reverse('verify-email')
+    relative_link = reverse('verify_email')
     absolute_url = "http://" + domain + \
         relative_link + "?token=" + str(access_token)
     subject = "Verify email."
