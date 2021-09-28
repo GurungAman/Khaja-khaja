@@ -25,6 +25,7 @@ urlpatterns = [
     path('api/', include('restaurant.urls')),
     path('api/', include('cart.urls')),
     path('api/', include('notification.urls')),
+    path('', include('auth_operations.urls')),
 
     path('api/token/', TokenObtainPairView.as_view(), name='get_token'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='refresh_token'),

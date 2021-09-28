@@ -1,7 +1,8 @@
-from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from rest_framework import serializers
 
 from .models import Customer, CustomUser
+from auth_operations.utils import password_validator
 
 User = get_user_model()
 
@@ -23,14 +24,9 @@ class CreateBaseUserSerializer(serializers.ModelSerializer):
         password1 = validated_data['password']
         password2 = validated_data['password_1']
 
-        if password1 != password2 or password1 is None:
-            raise serializers.ValidationError({
-                "errors": {
-                    "Password": "Password must match."
-                }
-            })
-        user.set_password(password1)
-        user.save()
+        if password_validator(password1, password2):
+            user.set_password(password1)
+            user.save()
         return user
 
 

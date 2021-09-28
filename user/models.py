@@ -16,7 +16,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(auto_now_add=True)
 
     # admin privileges
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
     staff = models.BooleanField(default=False)
     admin = models.BooleanField(default=False)
 
@@ -64,9 +64,6 @@ class Customer(models.Model):
 
     def save(self, *args, **kwargs):
         customer = self.customer
-        # customer is inactive and can only use app after
-        #  verifying through mail
-        # will be added later
         customer.is_customer = True
         customer.is_restaurant = False
         customer.save()

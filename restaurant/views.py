@@ -1,5 +1,6 @@
 from django.db.models import Q
 from django.db import transaction
+from django.contrib.sites.shortcuts import get_current_site
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import permission_classes, api_view
@@ -20,6 +21,7 @@ from .restaurant_utils import (
 from permissions import IsRestaurantOrReadOnly
 from .decorators import restaurant_owner_only
 from user.serializers import CreateBaseUserSerializer
+from tasks import verify_user_email
 
 # Create your views here.
 
@@ -45,15 +47,17 @@ def register_restaurant(request):
         'status': False
     }
     try:
-        customer_data = request.data
+        user_data = request.data
         base_user_serializer = CreateBaseUserSerializer(
-            data=customer_data['base_user'])
-        restaurant_serializer = RestaurantSerializer(data=customer_data)
+            data=user_data['base_user'])
+        restaurant_serializer = RestaurantSerializer(data=user_data)
         if restaurant_serializer.is_valid(raise_exception=False) and \
                 base_user_serializer.is_valid(raise_exception=False):
-            base_user_serializer.save(customer_data['base_user'])
+            user = base_user_serializer.save(user_data['base_user'])
             data = restaurant_serializer.data
             restaurant_serializer.save(data)
+            current_site = get_current_site(request)
+            verify_user_email(user=user, domain=current_site.domain)
             response['data'] = data
             response['status'] = True
         else:

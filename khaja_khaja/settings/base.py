@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
 
     # My Apps
+    'auth_operations',
+
     'user',
     'restaurant',
     'cart',
@@ -154,7 +156,7 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=5),
     'ROTATE_REFRESH_TOKENS': False,
     'USER_ID_FIELD': 'id',
-
+    'ALGORITHM': 'HS256',
 
     'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
 

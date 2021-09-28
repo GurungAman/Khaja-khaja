@@ -11,7 +11,7 @@ if config('environment') == 'dev':
 elif config('environment') == 'prod':
     os.environ.setdefault('DJANGO_SETTINGS_MODULE',
                           'khaja_khaja.settings.production')
-app = Celery('khaja_khaja', broker='redis://127.0.0.1:6379')
+app = Celery('khaja_khaja', include=['tasks'])
 
 # Using a string here means the worker doesn't have to serialize
 # the configuration object to child processes.

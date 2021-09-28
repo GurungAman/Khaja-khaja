@@ -9,5 +9,4 @@
 
 ## Tings To do;
  - payment Integration 
- - send mail for vertififcation
- - password change, reset
+ - password reset

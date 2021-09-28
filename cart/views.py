@@ -46,7 +46,7 @@ class OrderItemDetail(APIView):
                 response['error'] = order_item.errors
         except Exception as e:
             response['error'] = {
-                f"{e.__class__.__name__}": f"{e} oasdk"
+                f"{e.__class__.__name__}": f"{e}"
             }
         return Response(response)
 

@@ -1,5 +1,6 @@
 import json
 from django.contrib.auth import get_user_model
+from django.contrib.sites.shortcuts import get_current_site
 from rest_framework.decorators import permission_classes, api_view
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
@@ -10,6 +11,8 @@ from .serializers import (
 from .customer_utils import customer_details
 from .models import Customer
 from permissions import IsCustomerOnly
+from tasks import verify_user_email
+
 
 User = get_user_model()
 
@@ -36,15 +39,17 @@ def register_customer(request):
     }
     try:
         json_str = request.body.decode('utf-8')
-        restaurant_data = json.loads(json_str)
+        user_data = json.loads(json_str)
         base_user_serializer = CreateBaseUserSerializer(
-            data=restaurant_data['base_user'])
-        customer_serializer = CustomerSerializer(data=restaurant_data)
+            data=user_data['base_user'])
+        customer_serializer = CustomerSerializer(data=user_data)
         if customer_serializer.is_valid(raise_exception=False) \
                 and base_user_serializer.is_valid(raise_exception=False):
-            base_user_serializer.save(restaurant_data['base_user'])
+            user = base_user_serializer.save(user_data['base_user'])
             data = customer_serializer.data
             customer_serializer.save(data)
+            current_site = get_current_site(request)
+            verify_user_email(user=user, domain=current_site.domain)
             response['data'] = data
             response['status'] = True
         else:
