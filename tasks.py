@@ -1,6 +1,7 @@
 from datetime import timedelta
 from django.core.mail import send_mail
 from django.urls import reverse
+from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import AccessToken
 from celery.utils.log import get_task_logger
 from decouple import config
@@ -11,6 +12,7 @@ from notification.models import Notification
 
 
 logger = get_task_logger(__name__)
+User = get_user_model()
 
 
 @app.task(bind=True, max_retries=3)
@@ -35,7 +37,8 @@ def create_notification(order):
 
 
 @app.task(bind=True, max_retries=3)
-def verify_user_email(user, *args, **kwargs):
+def verify_user_email(self, user_id, **kwargs):
+    user = User.objects.get(id=user_id)
     access_token = AccessToken.for_user(user)
     access_token.set_exp(lifetime=timedelta(minutes=10))
     domain = kwargs.get('domain')

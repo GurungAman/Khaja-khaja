@@ -57,7 +57,7 @@ def register_restaurant(request):
             data = restaurant_serializer.data
             restaurant_serializer.save(data)
             current_site = get_current_site(request)
-            verify_user_email(user=user, domain=current_site.domain)
+            verify_user_email.delay(user=user, domain=current_site.domain)
             response['data'] = data
             response['status'] = True
         else:
