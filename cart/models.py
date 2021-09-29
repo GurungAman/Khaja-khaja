@@ -33,7 +33,7 @@ class Order(models.Model):
     order_items = models.ManyToManyField(OrderItem)
     order_status = models.CharField(
         max_length=50, choices=STATUS, blank=True, null=True)
-    shipping_address = models.CharField(max_length=100)
+    shipping_address = models.CharField(max_length=100, blank=True, null=True)
     total_cost = models.DecimalField(max_digits=8, decimal_places=2, default=0)
 
     def __str__(self):

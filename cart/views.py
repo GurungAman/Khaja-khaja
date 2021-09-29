@@ -1,9 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.decorators import api_view, permission_classes
 from .models import Order, OrderItem
 from .serializers import OrderItemSerializer, OrderSerializer
 from permissions import IsCustomerOnly
 from .cart_utils import order_details, order_items_details
+from tasks import create_notification
 
 # Create your views here.
 
@@ -12,12 +14,14 @@ class OrderItemDetail(APIView):
     permission_classes = [IsCustomerOnly]
 
     def get(self, request):
+        # returns details about order_items in Order/Cart
         response = {'status': False}
         user = request.user.customer
         try:
             order_items = OrderItem.objects.filter(user=user, ordered=False)
             order_item_detail = order_items_details(order_items)
             response['status'] = True
+            response['count_items'] = order_items.count()
             response['order_items'] = order_item_detail
         except Exception as e:
             response['error'] = {
@@ -61,6 +65,7 @@ class OrderItemDetail(APIView):
                     raise PermissionError("Permission denied.")
                 order_item.delete()
             response['status'] = True
+            response['message'] = "Order Item removed."
         except Exception as e:
             response['error'] = {
                 f"{e.__class__.__name__}": f"{e}"
@@ -123,3 +128,30 @@ class OrderDetail(APIView):
                 f"{e.__class__.__name__}": f"{e}"
             }
         return Response(response)
+
+
+@api_view(['POST'])
+@permission_classes([IsCustomerOnly])
+def checkout(request):
+    # {
+    #     "shipping_address": "test"
+    # }
+    response = {'status': False}
+    data = request.data
+    try:
+        customer = request.user.customer
+        order = Order.objects.get(user=customer, order_status=None)
+        address = customer.address
+        if data.get('shipping_address'):
+            address = data['shipping_address']
+            order.shipping_address = address
+        order.order_status = 'order_created'
+        order.save()
+        create_notification.delay(order_id=order.id)
+        response['order'] = order_details(order)
+        response['status'] = True
+    except Exception as e:
+        response['error'] = {
+            f"{e.__class__.__name__}": f"{e}"
+        }
+    return Response(response)

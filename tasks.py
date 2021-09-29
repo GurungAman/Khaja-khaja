@@ -24,8 +24,8 @@ def send_mail_task(self, subject, message, recipient_list):
 
 # @shared_task
 @app.task(bind=True, max_retries=3)
-def create_notification(order):
-    order = Order.objects.get(order=order)
+def create_notification(self, order_id):
+    order = Order.objects.get(id=order_id)
     order_items = order.order_items.all()
     for order_item in order_items:
         restaurant = order_item.food_item.restaurant
@@ -33,6 +33,8 @@ def create_notification(order):
             user=restaurant,
             order_item=order_item
         )
+        order_item.ordered = True
+        order_item.save()
     return None
 
 

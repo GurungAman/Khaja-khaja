@@ -28,7 +28,6 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    shipping_address = serializers.CharField(required=False)
     order_items = serializers.CharField(required=False)
 
     class Meta:
@@ -37,12 +36,8 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def save(self, validated_data):
         customer = Customer.objects.get(id=validated_data['user'])
-        address = customer.address
-        if validated_data.get('shipping_address'):
-            address = validated_data['shipping_address']
         order, _ = Order.objects.get_or_create(
             user=customer,
-            shipping_address=address,
             order_status=None
         )
         order_items = OrderItem.objects.filter(user=customer, ordered=False)

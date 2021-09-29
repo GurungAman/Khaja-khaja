@@ -21,6 +21,7 @@ def order_details(order_instance):
     order = {}
     order['customer'] = order_instance.user.get_name
     order_items = order_instance.order_items.all()
-    order['order_item_data'] = order_items_details(order_items)
+    order['count_items'] = order_items.count()
     order['total_cost'] = order_instance.total_cost
+    order['order_item_data'] = order_items_details(order_items)
     return order

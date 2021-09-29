@@ -70,7 +70,7 @@ def mark_all_notifications_as_read(request):
     return Response(response)
 
 
-@api_view(['POST'])
+@api_view(['GET'])
 @permission_classes([IsRestaurantOnly])
 def mark_a_notification_as_read(request, pk):
     user = request.user.restaurant
