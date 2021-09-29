@@ -31,7 +31,8 @@ def create_notification(self, order_id):
         restaurant = order_item.food_item.restaurant
         Notification.objects.create(
             user=restaurant,
-            order_item=order_item
+            order_item=order_item,
+            shipping_address=order.shipping_address,
         )
         order_item.ordered = True
         order_item.save()

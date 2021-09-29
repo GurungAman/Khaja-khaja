@@ -1,7 +1,6 @@
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
 from rest_framework import serializers
-from .models import OrderItem, Order
+from .models import OrderItem
 from restaurant.models import FoodItems
 from user.models import Customer
 
@@ -17,7 +16,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
     def save(self, validated_data):
         food_item = FoodItems.objects.get(id=validated_data['food_item'])
         customer = Customer.objects.get(id=validated_data['user'])
-        order_item, created = OrderItem.objects.get_or_create(
+        order_item, _ = OrderItem.objects.get_or_create(
             user=customer,
             food_item=food_item,
             ordered=False
@@ -25,27 +24,3 @@ class OrderItemSerializer(serializers.ModelSerializer):
         order_item.quantity = validated_data['quantity']
         order_item.save()
         return order_item
-
-
-class OrderSerializer(serializers.ModelSerializer):
-    order_items = serializers.CharField(required=False)
-
-    class Meta:
-        model = Order
-        fields = "__all__"
-
-    def save(self, validated_data):
-        customer = Customer.objects.get(id=validated_data['user'])
-        order, _ = Order.objects.get_or_create(
-            user=customer,
-            order_status=None
-        )
-        order_items = OrderItem.objects.filter(user=customer, ordered=False)
-        if not order_items.exists():
-            raise ValidationError("Empty cart")
-        for order_item in order_items:
-            if order_item.user == customer:
-                order.order_items.add(order_item)
-            else:
-                raise PermissionError("You do not own this order item.")
-        return order
