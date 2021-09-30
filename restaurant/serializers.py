@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import Category, Tags, FoodItems, Restaurant
+from .models import Category, Tags, FoodItems, Restaurant, Discount
 from user.serializers import CreateBaseUserSerializer
 
 User = get_user_model()
@@ -74,3 +74,11 @@ class UpdateRestaurantSerializer(serializers.ModelSerializer):
             instance.bio = validated_data['bio']
         instance.save()
         return instance
+
+
+class DiscountSerializer(serializers.ModelSerializer):
+    discount_amount = serializers.DecimalField(max_digits=8, decimal_places=2)
+
+    class Meta:
+        model = Discount
+        fields = ['discount_type', 'discount_amount']

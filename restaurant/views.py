@@ -5,9 +5,13 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import permission_classes, api_view
 from rest_framework.permissions import AllowAny
+from drf_spectacular.utils import OpenApiParameter, extend_schema
+from drf_spectacular.types import OpenApiTypes
 from .models import Category, Tags, FoodItems, Restaurant, Discount
 from .serializers import (
     CategorySerializer,
+    DiscountSerializer,
+    FoodItemsSerializer,
     TagsSerializer,
     RestaurantSerializer,
     UpdateRestaurantSerializer
@@ -26,6 +30,7 @@ from tasks import verify_user_email
 # Create your views here.
 
 
+@extend_schema(request=RestaurantSerializer)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_restaurant(request):
@@ -97,6 +102,7 @@ class RestaurantList(APIView):
             response['error'] = f"{e.__class__.__name__}"
         return Response(response)
 
+    @extend_schema(request=UpdateRestaurantSerializer)
     def put(self, request):
         response = {'status': False}
         user = request.user
@@ -143,6 +149,7 @@ class CategoryList(APIView):
             response['error'] = {f"{e.__class__.__name__}": f"{e}"}
         return Response(response)
 
+    @extend_schema(request=CategorySerializer)
     def post(self, request):
         response = {'status': False}
         try:
@@ -157,6 +164,7 @@ class CategoryList(APIView):
             response['error'] = {f"{e.__class__.__name__}": f"{e}"}
         return Response(response)
 
+    @extend_schema(request=CategorySerializer)
     def delete(self, request):
         response = {'status': False}
         try:
@@ -183,6 +191,7 @@ class TagsList(APIView):
             response['error'] = {f"{e.__class__.__name__}": f"{e}"}
         return Response(response)
 
+    @extend_schema(request=TagsSerializer)
     def post(self, request):
         response = {'status': False}
         try:
@@ -197,8 +206,10 @@ class TagsList(APIView):
             response['error'] = {f"{e.__class__.__name__}": f"{e}"}
         return Response(response)
 
+    @extend_schema(request=TagsSerializer)
     def delete(self, request):
         response = {'status': False}
+        print(request)
         try:
             tag = Tags.objects.get(name=request.data['name'])
             response['message'] = f"{tag} successfully deleted"
@@ -218,7 +229,8 @@ class FoodItemsList(APIView):
         user = request.user
         try:
             if user.is_anonymous or user.is_customer:
-                food_items = FoodItems.objects.filter(is_available=True)
+                food_items = FoodItems.objects.filter(
+                    is_available=True, restaurant__restaurant__is_active=True)
             else:
                 food_items = FoodItems.objects.filter()
             if data.get('name'):
@@ -247,6 +259,7 @@ class FoodItemsList(APIView):
             response['error'] = {f"{e.__class__.__name__}": f"{e}"}
         return Response(response)
 
+    @extend_schema(request=FoodItemsSerializer)
     def post(self, request):
         # {
         #     "category": 1,
@@ -290,6 +303,7 @@ class FoodItemDetail(APIView):
             response['error'] = {f"{e.__class__.__name__}": f"{e}"}
         return Response(response)
 
+    @extend_schema(request=FoodItemsSerializer)
     @restaurant_owner_only
     def put(self, request, pk):
         data = request.data
@@ -321,6 +335,7 @@ class FoodItemDetail(APIView):
             response['error'] = f"{e}"
         return Response(response)
 
+    @extend_schema(parameters=[OpenApiParameter("pk", OpenApiTypes.INT)])
     @restaurant_owner_only
     def delete(self, request, pk):
         response = {'status': False}
@@ -339,21 +354,24 @@ class FoodItemDetail(APIView):
 class DiscountView(APIView):
     permission_classes = [IsRestaurantOrReadOnly]
 
+    @extend_schema(request=DiscountSerializer)
     @restaurant_owner_only
     def post(self, request, pk):
+        """
+        id: Food Item Id \n
+        discount_amount takes decimal field
+        """
         # {
-        #     "discount": {
-        #         "discount_type": "percentage",
-        #         "discount_amount": 10.12
-        #     }
+        #     "discount_type": "percentage",
+        #     "discount_amount": 10.12
         # }
         data = request.data
         response = {'status': False}
         try:
             food_item = FoodItems.objects.get(id=pk)
             Discount.objects.create(
-                discount_type=data['discount']['discount_type'],
-                discount_amount=data['discount']['discount_amount'],
+                discount_type=['discount_type'],
+                discount_amount=data['discount_amount'],
                 food_item=food_item
             )
             food_item_name = food_item.name
@@ -364,6 +382,7 @@ class DiscountView(APIView):
             response['error'] = {f"{e.__class__.__name__}": f"{e}"}
         return Response(response)
 
+    @extend_schema(request=DiscountSerializer)
     @restaurant_owner_only
     def put(self, request, pk):
         data = request.data

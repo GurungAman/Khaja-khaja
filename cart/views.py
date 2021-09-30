@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
+from drf_spectacular.utils import extend_schema
 from .models import Order, OrderItem
 from .serializers import OrderItemSerializer
 from permissions import IsCustomerOnly
@@ -32,13 +33,8 @@ class OrderItemDetail(APIView):
             }
         return Response(response)
 
+    @extend_schema(request=OrderItemSerializer)
     def post(self, request):
-        """
-        {
-            "food_item": 5,
-            "quantity": 3
-        }
-        """
         response = {'status': False}
         data = request.data
         data['user'] = request.user.customer.pk
@@ -57,7 +53,15 @@ class OrderItemDetail(APIView):
             }
         return Response(response)
 
+    @extend_schema(request=OrderItemSerializer)
     def delete(self, request):
+        """
+        {
+
+            "order_items_ids": [1, 4, 5]
+
+        }
+        """
         response = {'status': False}
         data = request.data
         user = request.user.customer

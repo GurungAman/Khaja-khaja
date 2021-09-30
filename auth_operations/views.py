@@ -8,6 +8,7 @@ from django.utils.http import urlsafe_base64_decode
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 import jwt
 from .serializers import (
     ChangePasswordSerializer,
@@ -20,7 +21,7 @@ User = get_user_model()
 
 # Create your views here.
 
-
+@extend_schema(request=ChangePasswordSerializer)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def change_password(request):
@@ -41,6 +42,7 @@ def change_password(request):
     return Response(response)
 
 
+@extend_schema(request=ResetPasswordSerializer)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def reset_password_request(request):
@@ -78,6 +80,7 @@ def check_password_token(request, uidb64, token):
     return Response(response)
 
 
+@extend_schema(request=SetNewPasswordSerializer)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def set_new_password(request):

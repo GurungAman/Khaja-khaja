@@ -5,6 +5,7 @@ from rest_framework.decorators import permission_classes, api_view
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from drf_spectacular.utils import extend_schema
 from .serializers import (
     CustomerSerializer, CreateBaseUserSerializer, UpdateCustomerSerializer
 )
@@ -19,6 +20,7 @@ User = get_user_model()
 # Create your views here.
 
 
+@extend_schema(request=CustomerSerializer)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_customer(request):
@@ -49,7 +51,8 @@ def register_customer(request):
             data = customer_serializer.data
             customer_serializer.save(data)
             current_site = get_current_site(request)
-            verify_user_email.delay(user=user, domain=current_site.domain)
+            verify_user_email.delay(
+                user_id=user.id, domain=current_site.domain)
             response['data'] = data
             response['status'] = True
         else:
@@ -74,6 +77,7 @@ class CustomerDetails(APIView):
             response['error'] = {f"{e.__class__.__name__}": f"{e}"}
         return Response(response)
 
+    @extend_schema(request=UpdateCustomerSerializer)
     def put(self, request):
         # {
         #     "primary_phone_number": "dfgdfg",

@@ -45,6 +45,10 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
 
+    # Documentation tings
+    'drf_yasg',
+    'drf_spectacular',
+
     # My Apps
     'auth_operations',
     'user',
@@ -65,6 +69,8 @@ MIDDLEWARE = [
 
 #  Django Rest Framework configs
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         # 'rest_framework.authentication.SessionAuthentication',
@@ -148,6 +154,25 @@ AUTH_USER_MODEL = 'user.CustomUser'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'API Docs',
+    'DESCRIPTION': 'API Docs',
+    'VERSION': '1.0.0',
+    'SCHEMA_PATH_PREFIX': '/api/',
+}
+
+# SWAGGER_SETTINGS = {
+#     'SECURITY_DEFINITIONS': {
+#         'Bearer (JWT)': {
+#             'type': 'apiKey',
+#             'name': 'Authorization',
+#             'in': 'header'
+#         }
+#     }
+# }
+
+
 
 #  JWT settings
 SIMPLE_JWT = {

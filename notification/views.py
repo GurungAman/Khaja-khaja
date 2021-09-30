@@ -32,6 +32,14 @@ class Notifications(APIView):
         return Response(response)
 
     def delete(self, request):
+        """
+        Takes a list of notification ids:\n
+        {
+
+            "notification_ids": [1, 3, 5]
+        
+        }
+        """
         response = {'status': False}
         user = request.user.restaurant
         data = request.data
@@ -79,6 +87,9 @@ class NotificationDetail(APIView):
 @api_view(['POST'])
 @permission_classes([IsRestaurantOnly])
 def mark_all_notifications_as_read(request):
+    """
+    A post request to this link marks all notifications as read
+    """
     user = request.user.restaurant
     response = {"status": False}
     try:
