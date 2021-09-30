@@ -51,9 +51,9 @@ def register_customer(request):
             data = customer_serializer.data
             customer_serializer.save(data)
             current_site = get_current_site(request)
-            verify_user_email.delay(
-                user_id=user.id, domain=current_site.domain)
-            response['data'] = data
+            # verify_user_email.delay(
+            #     user_id=user.id, domain=current_site.domain)
+            response['data'] = customer_details(user.email)
             response['status'] = True
         else:
             response['errors'] = customer_serializer.errors
