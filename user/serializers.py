@@ -52,7 +52,7 @@ class CustomerSerializer(serializers.ModelSerializer):
 
 
 class UpdateCustomerSerializer(serializers.ModelSerializer):
-    primary_phone_number = serializers.CharField(max_length=50, required=False)
+    primary_phone_number = serializers.CharField(max_length=10, required=False)
     first_name = serializers.CharField(required=False)
     last_name = serializers.CharField(required=False)
     address = serializers.CharField(required=False)
@@ -61,3 +61,18 @@ class UpdateCustomerSerializer(serializers.ModelSerializer):
         model = Customer
         fields = ('primary_phone_number', 'first_name',
                   'middle_name', 'last_name', 'address', )
+
+    def update(self, instance, validated_data, **kwargs):
+        if validated_data.get("primary_phone_number"):
+            base_user = kwargs.get("base_user")
+            base_user.primary_phone_number = validated_data['primary_phone_number']
+            base_user.save()
+        if validated_data.get("first_name"):
+            instance.first_name = validated_data['first_name']
+        if validated_data.get("middle_name"):
+            instance.middle_name = validated_data['middle_name']
+        if validated_data.get("last_name"):
+            instance.last_name = validated_data['last_name']
+        if validated_data.get("address"):
+            instance.address = validated_data['address']
+        instance.save()

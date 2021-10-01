@@ -1,6 +1,7 @@
-from rest_framework.test import APITestCase
 from django.contrib.auth import get_user_model
-
+from rest_framework.test import APITestCase
+from user.customer_utils import customer_details
+from utils import get_access_token
 # Create your tests here.
 
 User = get_user_model()
@@ -8,8 +9,8 @@ User = get_user_model()
 
 class UserTestCase(APITestCase):
     def setUp(self):
-        self.register_customer_url = "/api/customer/register/"
-        self.token_obtain_url = "/api/token/"
+        self.base_url = "/api/customer"
+        self.register_customer_url = f"{self.base_url}/register/"
         self.data = {
             "base_user": {
                 "email": "test_user@test.com",
@@ -22,27 +23,16 @@ class UserTestCase(APITestCase):
             "last_name": "grg",
             "address": "PKR"
         }
-        return super().setUp()
+
+    def tearDown(self):
+        return super().tearDown()
 
     def resgister_customer(self):
         self.client.post(
             self.register_customer_url, self.data, format="json")
 
-    def get_access_token(self):
-        data = {
-            'email': self.data['base_user']["email"],
-            'password': self.data['base_user']['password']
-        }
-        response = self.client.post(
-            self.token_obtain_url, data, format="json")
-        return response
-
     def test_create_customer_user(self):
-        self.data['base_user']["password_1"] = "wrong_password"
-        response = self.client.post(
-            self.register_customer_url, self.data, format="json")
-        self.assertFalse(response.data['status'])
-        self.data['base_user']["password_1"] = "valid_password123"
+        """ Creates a customer account on valid data. """
         response = self.client.post(
             self.register_customer_url, self.data, format="json")
         self.assertTrue(response.data['status'])
@@ -50,65 +40,152 @@ class UserTestCase(APITestCase):
             response.data['data']['email'], self.data['base_user']['email'])
         self.assertEqual(response.status_code, 200)
 
-    def test_user_email_integrity(self):
-        email = "integrity@test.com"
+    def test_invalid_password(self):
+        """
+        Check for invalid password and return an error.
+        """
+        self.data['base_user']["password_1"] = "wrong_password"
+        response = self.client.post(
+            self.register_customer_url, self.data, format="json")
+        self.assertTrue("error" in response.data)
+        self.assertFalse(response.data['status'])
+
+    def test_if_email_already_exists(self):
+        """
+        Identifies if a user with the same email already exists.
+        """
+        email = self.data['base_user']['email']
         user = User.objects.create_user(email=email, password="amangrg123")
         user.is_active = True
         user.is_customer = True
         user.save()
-        self.data['base_user'] = email
         response = self.client.post(
             self.register_customer_url, self.data, format="json")
+        self.assertTrue("error" in response.data)
         self.assertFalse(response.data['status'])
         self.assertEqual(response.status_code, 200)
 
     def test_create_customer_with_base_data_only(self):
+        """ Create customer account without complete data. """
         data = self.data['base_user']
         response = self.client.post(
             self.register_customer_url, data, format="json")
+        self.assertTrue("error" in response.data)
         self.assertFalse(response.data['status'])
 
     def test_token_obtain_with_unverified_mail(self):
+        """ Error returned to users who are not vertified/active. """
         self.resgister_customer()
-        response = self.get_access_token()
+        user_credentials = {
+            'email': self.data['base_user']["email"],
+            'password': self.data['base_user']['password']
+        }
+        url = f"{self.base_url}/"
+        response = self.client.post(url, user_credentials, format="json")
         self.assertEqual(response.status_code, 401)
 
     def test_token_obtain_with_verified_mail(self):
+        """
+        Returns access and refresh token to users
+        who have vertified their email.
+        """
         self.resgister_customer()
-        data = {
+        user_credentials = {
             'email': self.data['base_user']["email"],
             'password': self.data['base_user']['password']
         }
-        user = User.objects.get(email=data['email'])
+        user = User.objects.get(email=user_credentials['email'])
         user.is_active = True
         user.save()
-        response = self.get_access_token()
+        url = "/api/token/"
+        response = self.client.post(url, user_credentials, format="json")
+        self.assertTrue("access" in response.data)
+        self.assertTrue("refresh" in response.data)
         self.assertEqual(response.status_code, 200)
 
-    def test_get_customer_details(self):
+    def test_get_unvertified_customer_details(self):
+        """ Return error when trying to get details about inactive customer. """
         self.resgister_customer()
-        customer_details_url = "/api/customer/"
-        data = {
+        url = f"{self.base_url}/"
+        response = self.client.get(
+            path=url, format="json")
+        self.assertEqual(response.status_code, 401)
+
+    def test_get_customer_details(self):
+        """ Get active/vertified customer's details. """
+        self.resgister_customer()
+        url = f"{self.base_url}/"
+        user_credentials = {
             'email': self.data['base_user']["email"],
             'password': self.data['base_user']['password']
         }
-        user = User.objects.get(email=data['email'])
+        user = User.objects.get(email=user_credentials['email'])
         user.is_active = True
         user.save()
-        response = self.client.get(
-            path=customer_details_url, format="json")
-        self.assertEqual(response.status_code, 401)
-        token_pair = self.get_access_token().data
-        access_token = token_pair['access']
+        access_token = get_access_token(user_credentials)
         headers = {
             "HTTP_AUTHORIZATION": f"Bearer {access_token}"
         }
-
         response = self.client.get(
-            path=customer_details_url, **headers)
+            path=url, **headers)
         self.assertTrue(response.data['status'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['user_details']['email'], data['email'])
+        customer_data = customer_details(user_credentials['email'])
+        self.assertEqual(response.data['customer_data'], customer_data)
+        self.assertEqual(
+            response.data['customer_data']['email'], user_credentials['email'])
 
-    def tearDown(self):
-        return super().tearDown()
+    def test_update_customer_info(self):
+        """ Update customer info. """
+        self.resgister_customer()
+        url = f"{self.base_url}/"
+        user_credentials = {
+            'email': self.data['base_user']["email"],
+            'password': self.data['base_user']['password']
+        }
+        user = User.objects.get(email=user_credentials['email'])
+        user.is_active = True
+        user.save()
+
+        access_token = get_access_token(user_credentials)
+        headers = {
+            "HTTP_AUTHORIZATION": f"Bearer {access_token}"
+        }
+        update_data = {
+            "primary_phone_number": "09123",
+            "first_name": "test",
+            "middle_name": "middle",
+            "last_name": "grgg",
+            "address": "new_aadress"
+        }
+        response = self.client.put(
+            path=url, data=update_data, **headers)
+        self.assertTrue(response.data['status'])
+        self.assertEqual(
+            response.data['customer_data']['primary_phone_number'],
+            update_data['primary_phone_number'])
+        self.assertEqual(response.data['customer_data']
+                         ['address'], update_data['address'])
+        self.assertEqual(response.status_code, 200)
+
+    def test_delete_customer(self):
+        """ Sets customer to inactive. """
+        self.resgister_customer()
+        url = f"{self.base_url}/"
+        user_credentials = {
+            'email': self.data['base_user']["email"],
+            'password': self.data['base_user']['password']
+        }
+        user = User.objects.get(email=user_credentials['email'])
+        user.is_active = True
+        user.save()
+
+        access_token = get_access_token(user_credentials)
+        headers = {
+            "HTTP_AUTHORIZATION": f"Bearer {access_token}"
+        }
+        response = self.client.delete(
+            path=url, **headers)
+        self.assertTrue(response.data['status'])
+        user_deleted = User.objects.get(email=user_credentials['email'])
+        self.assertFalse(user_deleted.is_active)

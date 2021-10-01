@@ -60,10 +60,10 @@ def register_restaurant(request):
                 base_user_serializer.is_valid(raise_exception=False):
             user = base_user_serializer.save(user_data['base_user'])
             data = restaurant_serializer.data
-            restaurant_serializer.save(data)
+            restaurant = restaurant_serializer.save(data)
             current_site = get_current_site(request)
-            verify_user_email.delay(user=user, domain=current_site.domain)
-            response['data'] = data
+            # verify_user_email.delay(user=user, domain=current_site.domain)
+            response['restaurant_data'] = restaurant_details([restaurant])
             response['status'] = True
         else:
             response['error'] = restaurant_serializer.errors
@@ -97,7 +97,8 @@ class RestaurantList(APIView):
         response = {'status': False}
         try:
             restaurants = Restaurant.objects.filter(restaurant__is_active=True)
-            response['restaurant'] = restaurant_details(restaurants)
+            response['restaurant_data'] = restaurant_details(restaurants)
+            response['status'] = True
         except Exception as e:
             response['error'] = f"{e.__class__.__name__}"
         return Response(response)
@@ -111,9 +112,9 @@ class RestaurantList(APIView):
             restaurant = Restaurant.objects.get(restaurant=user)
             restaurant_serializer = UpdateRestaurantSerializer(data=data)
             if restaurant_serializer.is_valid(raise_exception=False):
-                restaurant_serializer.save(
+                restaurant_serializer.update(
                     instance=restaurant, validated_data=data)
-                response['restaurant'] = restaurant_details([restaurant])
+                response['restaurant_data'] = restaurant_details([restaurant])
                 response['status'] = True
             else:
                 response['error'] = restaurant_serializer.errors
@@ -209,7 +210,6 @@ class TagsList(APIView):
     @extend_schema(request=TagsSerializer)
     def delete(self, request):
         response = {'status': False}
-        print(request)
         try:
             tag = Tags.objects.get(name=request.data['name'])
             response['message'] = f"{tag} successfully deleted"

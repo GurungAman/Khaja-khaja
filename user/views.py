@@ -56,7 +56,7 @@ def register_customer(request):
             response['data'] = customer_details(user.email)
             response['status'] = True
         else:
-            response['errors'] = customer_serializer.errors
+            response['error'] = customer_serializer.errors
     except Exception as e:
         response['error'] = {f"{e.__class__.__name__}": f"{e}"}
     return Response(response)
@@ -71,7 +71,7 @@ class CustomerDetails(APIView):
         response = {'status': False}
         try:
             customer = customer_details(email=user)
-            response['user_details'] = customer
+            response['customer_data'] = customer
             response['status'] = True
         except Exception as e:
             response['error'] = {f"{e.__class__.__name__}": f"{e}"}
@@ -94,23 +94,22 @@ class CustomerDetails(APIView):
             customer_serializer = UpdateCustomerSerializer(data=data)
             if customer_serializer.is_valid(raise_exception=False):
                 customer_serializer.update(
-                    instance=customer, validated_data=data)
-                response['user_details'] = customer_details(
+                    instance=customer, validated_data=data, base_user=user)
+                response['customer_data'] = customer_details(
                     email=user.email)
                 response['status'] = True
             else:
                 response['error'] = customer_serializer.errors
         except Exception as e:
-            response['error'] = f"{e.__class__.__name__ }"
+            response['error'] = {f"{e.__class__.__name__}": f"{e}"}
         return Response(response)
 
     def delete(self, request):
         user = request.user
         response = {'status': False}
         try:
-            customer = Customer.objects.get(customer=user)
-            customer.is_active = False
-            customer.save()
+            user.is_active = False
+            user.save()
             response['status'] = True
         except Exception as e:
             response['error'] = {f"{e.__class__.__name__}": f"{e}"}
