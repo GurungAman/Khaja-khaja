@@ -37,7 +37,7 @@ class Notifications(APIView):
         {
 
             "notification_ids": [1, 3, 5]
-        
+
         }
         """
         response = {'status': False}

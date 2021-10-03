@@ -44,7 +44,7 @@ class OrderItemDetail(APIView):
                 order_items = order_item.save(validated_data=data)
                 response['status'] = True
                 response['order_item'] = order_items_details(
-                    [order_items])
+                    [order_items])[0]
             else:
                 response['error'] = order_item.errors
         except Exception as e:
@@ -112,6 +112,7 @@ class OrderDetail(APIView):
                 order_status=None)
             order.delete()
             response['status'] = True
+            response['message'] = "Order deleted successfully."
         except Exception as e:
             response['error'] = {
                 f"{e.__class__.__name__}": f"{e}"
@@ -137,8 +138,6 @@ def checkout(request):
             if data.get('shipping_address'):
                 address = data['shipping_address']
                 order.shipping_address = address
-            order.order_status = 'order_created'
-            order.save()
             create_notification.delay(order_id=order.id)
             response['order'] = order_details(order)
         response['status'] = True

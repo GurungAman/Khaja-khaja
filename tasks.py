@@ -36,6 +36,8 @@ def create_notification(self, order_id):
         )
         order_item.ordered = True
         order_item.save()
+    order.order_status = 'order_created'
+    order.save()
     return None
 
 

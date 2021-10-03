@@ -537,4 +537,3 @@ class DiscountTestCase(RestaurantTestCase):
         self.assertTrue(response.data['status'])
         self.assertTrue("message" in response.data)
         self.assertEqual(response.status_code, 200)
-
