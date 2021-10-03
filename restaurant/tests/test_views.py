@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from restaurant.models import Restaurant, FoodItems, Category, Tags
+from restaurant.models import Restaurant, FoodItems, Category, Tags, Discount
 from restaurant.restaurant_utils import restaurant_details
 from .restaurant_test_setup import RestaurantTestCase
 from utils import get_access_token
@@ -173,7 +173,10 @@ class CategoryTestCase(RestaurantTestCase):
         self.assertEqual(categories.count(), 1)
 
     def test_create_category_with_existing_name(self):
-        """ Checks and return errorr if category with same name already exists. """
+        """
+        Checks and return error if category with
+        same name already exists.
+        """
         Category.objects.create(name='category-1')
         url = f"{self.base_url}/category/"
         data = {
@@ -275,13 +278,30 @@ class TagsTestCase(RestaurantTestCase):
 class FoodItemsTestCase(RestaurantTestCase):
     def setUp(self):
         super().setUp()
-        Category.objects.create(name="category1")
-        Category.objects.create(name="category2")
-        Tags.objects.create(name="tag-1")
-        Tags.objects.create(name="tag-2")
+        self.category1 = Category.objects.create(name="category1")
+        self.category2 = Category.objects.create(name="category2")
+        self.tag1 = Tags.objects.create(name="tag-1")
+        self.tag2 = Tags.objects.create(name="tag-2")
+
+    def create_test_food_item(self):
+        """Helper function for creating food items instances."""
+        food_item = FoodItems.objects.create(
+            name="food item 1",
+            restaurant=self.restaurant,
+            category=self.category1,
+            price=600
+        )
+        food_item.tags.add(self.tag1)
+        food_item = FoodItems.objects.create(
+            name="food item 2",
+            restaurant=self.restaurant,
+            category=self.category2,
+            price=1000
+        )
+        food_item.tags.add(self.tag2)
 
     def test_create_food_item(self):
-        """ Creates a food item instance. """
+        """ Test for creating food item instance. """
         url = f"{self.base_url}/"
         data = {
             "category": 1,
@@ -293,3 +313,228 @@ class FoodItemsTestCase(RestaurantTestCase):
         self.assertTrue(response.data['status'])
         self.assertTrue("food_item" in response.data)
         self.assertEqual(response.data['food_item'][0]['name'], data['name'])
+
+    def test_get_food_items_by_name(self):
+        """Get items with their names."""
+        self.create_test_food_item()
+        url = f"{self.base_url}/"
+        params = {
+            "name": "food item 1"
+        }
+        response = self.client.get(url, data=params)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data['food_items']), 1)
+        self.assertTrue(response.data['status'])
+
+    def test_get_food_items_by_category(self):
+        """Get items with category name."""
+        self.create_test_food_item()
+        url = f"{self.base_url}/"
+        params = {
+            "category": "category1"
+        }
+        response = self.client.get(url, data=params)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data['food_items']), 1)
+        self.assertTrue(response.data['status'])
+
+    def test_get_food_items_by_price(self):
+        """Get items with based on their price."""
+        self.create_test_food_item()
+        url = f"{self.base_url}/"
+        params = {
+            "min_price": 700,
+            "max_price": 1100
+        }
+        response = self.client.get(url, data=params)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data['food_items']), 1)
+        self.assertTrue(response.data['status'])
+
+    def test_get_food_item_detail(self):
+        """Get item details."""
+        self.create_test_food_item()
+        url = f"{self.base_url}/2"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data['status'])
+        self.assertTrue("food_item" in response.data)
+        self.assertEqual(response.data['food_item']['id'], 2)
+
+    def test_update_food_item(self):
+        """
+        Update item details by restaurant who created
+        the food item instance.
+        """
+        self.create_test_food_item()
+        data = {
+            "category": 2,
+            "name": "updated name",
+            "remove_tags": [2],
+            "price": 100
+        }
+        url = f"{self.base_url}/2"
+        response = self.client.put(url, data, format="json", **self.headers)
+        self.assertTrue("food_item" in response.data)
+        self.assertTrue(response.data['status'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['food_item']['name'], data['name'])
+        self.assertEqual(response.data['food_item']['price'], data['price'])
+
+    def test_update_food_item_by_unauthorized_restaurant(self):
+        """
+        Test updating item details by unauhtorized restaurant.
+        """
+        self.create_test_food_item()
+        user_credentials = {
+            "email": "unauth@restaurant.com",
+            "password": "newpassword123"
+        }
+        user = User.objects.create_user(
+            email=user_credentials['email'],
+            password=user_credentials['password']
+        )
+        user.is_active = user.is_restaurant = True
+        user.save()
+        Restaurant.objects.create(
+            restaurant=user,
+            name="Restaurant 123",
+            license_number="lic 122345",
+            address="address pkr",
+            secondary_phone_number="0912456",
+            bio="bio 123"
+        )
+        data = {
+            "name": "updated name",
+            "price": 100
+        }
+        url = f"{self.base_url}/2"
+        access_token = get_access_token(data=user_credentials)
+        headers = {
+            "HTTP_AUTHORIZATION": f"Bearer {access_token}"
+        }
+
+        response = self.client.put(url, data, format="json", **headers)
+        self.assertFalse(response.data['status'])
+        self.assertTrue('error' in response.data)
+
+    def test_delete_food_item(self):
+        """
+        Test item deletion.
+        """
+        self.create_test_food_item()
+        url = f"{self.base_url}/2"
+        response = self.client.delete(url, format="json", **self.headers)
+        self.assertTrue("message" in response.data)
+        self.assertTrue(response.data['status'])
+        self.assertEqual(response.status_code, 200)
+
+
+class DiscountTestCase(RestaurantTestCase):
+    def setUp(self):
+        super().setUp()
+        self.category1 = Category.objects.create(name="category1")
+        self.food_item = FoodItems.objects.create(
+            name="food item 1",
+            restaurant=self.restaurant,
+            category=self.category1,
+            price=600
+        )
+        self.discount_url = f"{self.base_url}/{self.food_item.id}/discount/"
+
+    def test_create_discount(self):
+        """
+        Test for creation of discount for food item by
+        an authorized restaurant user.
+        """
+        data = {
+            "discount_type": "amount",
+            "discount_amount": 20
+        }
+        response = self.client.post(
+            self.discount_url, data, format="json", **self.headers)
+        self.assertTrue(response.data['status'])
+        self.assertTrue("message" in response.data)
+        self.assertEqual(response.data['food_item']['id'], self.food_item.id)
+        self.assertEqual(response.status_code, 200)
+
+    def test_create_discount_greater_than_price(self):
+        """
+        Test for creating discount that is greater than actual
+        price of the item.
+        This returns a validatione error.
+        """
+        data = {
+            "discount_type": "amount",
+            "discount_amount": 1000
+        }
+        response = self.client.post(
+            self.discount_url, data, format="json", **self.headers)
+        self.assertTrue("error" in response.data)
+        self.assertFalse(response.data['status'])
+
+    def test_create_discount_by_unauthorized_user(self):
+        """
+        Creating discount for food item as an unauthorized users.
+        """
+        user_credentials = {
+            "email": "unauth@restaurant.com",
+            "password": "newpassword123"
+        }
+        user = User.objects.create_user(
+            email=user_credentials['email'],
+            password=user_credentials['password']
+        )
+        user.is_active = user.is_restaurant = True
+        user.save()
+        Restaurant.objects.create(
+            restaurant=user,
+            name="Restaurant 123"
+        )
+        access_token = get_access_token(data=user_credentials)
+        headers = {
+            "HTTP_AUTHORIZATION": f"Bearer {access_token}"
+        }
+        data = {
+            "discount_type": "percentage",
+            "discount_amount":  50
+        }
+        response = self.client.post(
+            self.discount_url, data, format="json", **headers)
+        self.assertFalse(response.data['status'])
+        self.assertTrue("error" in response.data)
+        self.assertEqual(response.status_code, 200)
+
+    def test_update_discount(self):
+        """
+        Udating discount for food item if it already exists.
+        Creates a new discount instance if it does not exiist.
+        """
+        Discount.objects.create(
+            food_item=self.food_item,
+            discount_type="amount",
+            discount_amount=20
+        )
+        data = {
+            "discount_type": "percentage",
+            "discount_amount":  30
+        }
+        response = self.client.post(
+            self.discount_url, data, format="json", **self.headers)
+        self.assertTrue(response.data['status'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['food_item']
+                         ['discount_type'], data["discount_type"])
+        self.assertTrue("message" in response.data)
+
+    def test_delete_discount(self):
+        Discount.objects.create(
+            food_item=self.food_item,
+            discount_type="amount",
+            discount_amount=20
+        )
+        response = self.client.delete(self.discount_url,  **self.headers)
+        self.assertTrue(response.data['status'])
+        self.assertTrue("message" in response.data)
+        self.assertEqual(response.status_code, 200)
+

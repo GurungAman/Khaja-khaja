@@ -34,7 +34,8 @@ def food_items_details(food_items):
         data['tags'] = get_tags(tags=data['tags'])
         discount = Discount.objects.filter(food_item__id=data['id'])
         if discount.exists():
-            data['discount'] = discount[0].discount_amount
+            data['discount_type'] = discount[0].discount_type
+            data['discount_amount'] = discount[0].discount_amount
         else:
             data['discount'] = 0
         data.pop('is_available')

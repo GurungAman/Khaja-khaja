@@ -22,7 +22,7 @@ def restaurant_owner_only(func):
                 if not user == food_item.restaurant:
                     response['error'] = "Permission denied."
                     return Response(response)
-                return func(self, request, *args, **kwargs)
+                return func(self, request, pk=None, *args, **kwargs)
         except Exception as e:
             response['error'] = f'{e.__class__.__name__}'
             return Response(response)

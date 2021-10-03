@@ -1,4 +1,3 @@
-from django.db.models import Q
 from django.db import transaction
 from django.contrib.sites.shortcuts import get_current_site
 from rest_framework.views import APIView
@@ -22,7 +21,7 @@ from .restaurant_utils import (
     restaurant_details,
     add_tags_to_food_item
 )
-from permissions import IsRestaurantOrReadOnly
+from permissions import IsRestaurantOnly, IsRestaurantOrReadOnly
 from .decorators import restaurant_owner_only
 from user.serializers import CreateBaseUserSerializer
 from tasks import verify_user_email
@@ -62,7 +61,7 @@ def register_restaurant(request):
             data = restaurant_serializer.data
             restaurant = restaurant_serializer.save(data)
             current_site = get_current_site(request)
-            # verify_user_email.delay(user=user, domain=current_site.domain)
+            verify_user_email.delay(user=user, domain=current_site.domain)
             response['restaurant_data'] = restaurant_details([restaurant])
             response['status'] = True
         else:
@@ -224,7 +223,7 @@ class FoodItemsList(APIView):
     permission_classes = [IsRestaurantOrReadOnly]
 
     def get(self, request):
-        data = request.data
+        data = request.GET
         response = {'status': False}
         user = request.user
         try:
@@ -236,15 +235,14 @@ class FoodItemsList(APIView):
             if data.get('name'):
                 food_items = food_items.filter(name__icontains=data['name'])
             if data.get('category'):
-                food_items = food_items.filter(category__name=data['category'])
+                food_items = food_items.filter(
+                    category__name__icontains=data['category'])
             if data.get('tags'):
                 food_items = food_items.filter(tags__name=data['tags'])
-            if data.get('price'):
-                #  max price and min price must be specified if search by price
-                max_price = data['price']['max_price']
-                min_price = data['price']['min_price']
-                food_items = food_items.filter(
-                    Q(price__gte=min_price) & Q(price__lte=max_price))
+            if data.get('min_price'):
+                food_items = food_items.filter(price__gte=data['min_price'])
+            if data.get('max_price'):
+                food_items = food_items.filter(price__lte=data['max_price'])
             if data.get('restaurant'):
                 restaurants = Restaurant.objects.filter(
                     name__icontains=data['restaurant'])
@@ -252,7 +250,9 @@ class FoodItemsList(APIView):
             if data.get('discount'):
                 discounted_food_items = Discount.objects.filter()
                 food_items = [item.food_item for item in discounted_food_items]
-                print(food_items)
+            if not food_items.exists():
+                response['message'] = "Item does not exist"
+                return Response(response)
             response['food_items'] = food_items_details(food_items)
             response['status'] = True
         except Exception as e:
@@ -297,7 +297,7 @@ class FoodItemDetail(APIView):
         response = {'status': False}
         try:
             food_item = FoodItems.objects.get(id=pk)
-            response['food_item'] = food_items_details([food_item])
+            response['food_item'] = food_items_details([food_item])[0]
             response['status'] = True
         except Exception as e:
             response['error'] = {f"{e.__class__.__name__}": f"{e}"}
@@ -329,7 +329,7 @@ class FoodItemDetail(APIView):
                         tag_obj = Tags.objects.get(id=tag)
                         food_item.tags.remove(tag_obj)
                 food_item.save()
-            response['food_item'] = food_items_details([food_item])
+            response['food_item'] = food_items_details([food_item])[0]
             response['status'] = True
         except Exception as e:
             response['error'] = f"{e}"
@@ -352,7 +352,7 @@ class FoodItemDetail(APIView):
 
 
 class DiscountView(APIView):
-    permission_classes = [IsRestaurantOrReadOnly]
+    permission_classes = [IsRestaurantOnly]
 
     @extend_schema(request=DiscountSerializer)
     @restaurant_owner_only
@@ -369,12 +369,12 @@ class DiscountView(APIView):
         response = {'status': False}
         try:
             food_item = FoodItems.objects.get(id=pk)
-            Discount.objects.create(
-                discount_type=['discount_type'],
-                discount_amount=data['discount_amount'],
-                food_item=food_item
-            )
+            discount, _ = Discount.objects.get_or_create(food_item=food_item)
+            discount.discount_type = data['discount_type'],
+            discount.discount_amount = data['discount_amount'],
+            discount.save()
             food_item_name = food_item.name
+            response['food_item'] = food_items_details([food_item])[0]
             response['message'] = "Discount " \
                 f"for {food_item_name} created successfully."
             response['status'] = True
@@ -382,25 +382,26 @@ class DiscountView(APIView):
             response['error'] = {f"{e.__class__.__name__}": f"{e}"}
         return Response(response)
 
-    @extend_schema(request=DiscountSerializer)
-    @restaurant_owner_only
-    def put(self, request, pk):
-        data = request.data
-        response = {'status': False}
-        try:
-            discount = Discount.objects.get(food_item__id=pk)
-            if data.get('discount_type'):
-                discount.discount_type = data['discount_type']
-            if data.get('amount'):
-                discount.discount_amount = data['discount_amount']
-            discount.save()
-            response['status'] = True
-            food_item_name = discount.food_item.name
-            response['message'] = "Discount " \
-                f"for {food_item_name} updated successfully."
-        except Exception as e:
-            response['error'] = {f"{e.__class__.__name__}": f"{e}"}
-        return Response(response)
+    # @extend_schema(request=DiscountSerializer)
+    # @restaurant_owner_only
+    # def put(self, request, pk):
+    #     data = request.data
+    #     response = {'status': False}
+    #     try:
+    #         discount = Discount.objects.get(food_item__id=pk)
+    #         if data.get('discount_type'):
+    #             discount.discount_type = data['discount_type']
+    #         if data.get('amount'):
+    #             discount.discount_amount = data['discount_amount']
+    #         discount.save()
+    #         food_item = discount.food_item
+    #         response['food_item'] = food_items_details([food_item])[0]
+    #         response['status'] = True
+    #         response['message'] = "Discount " \
+    #             f"for {food_item.name} updated successfully."
+    #     except Exception as e:
+    #         response['error'] = {f"{e.__class__.__name__}": f"{e}"}
+    #     return Response(response)
 
     @restaurant_owner_only
     def delete(self, request, pk):

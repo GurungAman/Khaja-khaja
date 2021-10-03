@@ -8,14 +8,13 @@ from .models import Discount
 def update_food_item_price(sender, instance, **kwargs):
     food_item = instance.food_item
     food_item_price = food_item.price
-    print(instance.discount_amount)
     if instance.discount_type == 'amount':
         food_item_price -= instance.discount_amount
     else:
         discounted_price = (food_item_price * instance.discount_amount) / 100
         food_item_price -= discounted_price
     if food_item_price <= 0:
-        raise ValidationError("Disocunt shouldn't be greater than total cost.")
+        raise ValidationError("Discount shouldn't be greater than total cost.")
     food_item.price = food_item_price
     food_item.save()
 
