@@ -61,7 +61,7 @@ def register_restaurant(request):
             data = restaurant_serializer.data
             restaurant = restaurant_serializer.save(data)
             current_site = get_current_site(request)
-            verify_user_email.delay(user=user, domain=current_site.domain)
+            # verify_user_email.delay(user=user, domain=current_site.domain)
             response['restaurant_data'] = restaurant_details([restaurant])
             response['status'] = True
         else:
@@ -231,7 +231,8 @@ class FoodItemsList(APIView):
                 food_items = FoodItems.objects.filter(
                     is_available=True, restaurant__restaurant__is_active=True)
             else:
-                food_items = FoodItems.objects.filter()
+                food_items = FoodItems.objects.filter(
+                    restaurant=user.restaurant)
             if data.get('name'):
                 food_items = food_items.filter(name__icontains=data['name'])
             if data.get('category'):
@@ -369,10 +370,18 @@ class DiscountView(APIView):
         response = {'status': False}
         try:
             food_item = FoodItems.objects.get(id=pk)
-            discount, _ = Discount.objects.get_or_create(food_item=food_item)
-            discount.discount_type = data['discount_type'],
-            discount.discount_amount = data['discount_amount'],
-            discount.save()
+            discount = Discount.objects.filter(food_item=food_item)
+            if discount.exists():
+                discount = discount[0]
+                discount.discount_type = data['discount_type']
+                discount.discount_amount = data['discount_amount']
+                discount.save()
+            else:
+                Discount.objects.create(
+                    food_item=food_item,
+                    discount_type=data['discount_type'],
+                    discount_amount=data['discount_amount']
+                )
             food_item_name = food_item.name
             response['food_item'] = food_items_details([food_item])[0]
             response['message'] = "Discount " \

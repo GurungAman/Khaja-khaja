@@ -21,7 +21,7 @@ class Notifications(APIView):
             if notifications.exists():
                 response['notifications'] = notification_details(notifications)
             else:
-                response['notifications'] = "You do" \
+                response['notifications'] = "You do " \
                                             "not have any notifications"
             response['status'] = True
 
@@ -84,27 +84,27 @@ class NotificationDetail(APIView):
         return Response(response)
 
 
-@api_view(['POST'])
-@permission_classes([IsRestaurantOnly])
-def mark_all_notifications_as_read(request):
-    """
-    A post request to this link marks all notifications as read
-    """
-    user = request.user.restaurant
-    response = {"status": False}
-    try:
-        notifications = NotificationModel.objects.filter(
-            user=user, status="U").order_by('-created_at')
-        if notifications.exists():
-            for notification in notifications:
-                notification.status = "R"
-                notification.save()
-        response['status'] = True
-    except Exception as e:
-        response['error'] = {
-            f"{e.__class__.__name__}": f"{e}"
-        }
-    return Response(response)
+# @api_view(['POST'])
+# @permission_classes([IsRestaurantOnly])
+# def mark_all_notifications_as_read(request):
+#     """
+#     A post request to this link marks all notifications as read
+#     """
+#     user = request.user.restaurant
+#     response = {"status": False}
+#     try:
+#         notifications = NotificationModel.objects.filter(
+#             user=user, status="U").order_by('-created_at')
+#         if notifications.exists():
+#             for notification in notifications:
+#                 notification.status = "R"
+#                 notification.save()
+#         response['status'] = True
+#     except Exception as e:
+#         response['error'] = {
+#             f"{e.__class__.__name__}": f"{e}"
+#         }
+#     return Response(response)
 
 
 @api_view(['GET'])

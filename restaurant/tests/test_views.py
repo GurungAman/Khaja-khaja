@@ -53,7 +53,7 @@ class RestaurantUserTestCase(APITestCase):
         inactive restaurant.
         """
         self.resgister_restaurant()
-        url = f"{self.base_url}/1"
+        url = f"{self.base_url}/1/"
         response = self.client.get(url)
         self.assertTrue("error" in response.data)
         self.assertFalse(response.data['status'])
@@ -61,7 +61,7 @@ class RestaurantUserTestCase(APITestCase):
     def test_get_vertified_restaurant_details(self):
         """ Get detail of vertified/active restaurant. """
         self.resgister_restaurant()
-        url = f"{self.base_url}/1"
+        url = f"{self.base_url}/1/"
         user = User.objects.get(email=self.data['base_user']['email'])
         user.is_active = True
         user.save()
@@ -354,7 +354,7 @@ class FoodItemsTestCase(RestaurantTestCase):
     def test_get_food_item_detail(self):
         """Get item details."""
         self.create_test_food_item()
-        url = f"{self.base_url}/2"
+        url = f"{self.base_url}/2/"
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.data['status'])
@@ -373,7 +373,7 @@ class FoodItemsTestCase(RestaurantTestCase):
             "remove_tags": [2],
             "price": 100
         }
-        url = f"{self.base_url}/2"
+        url = f"{self.base_url}/2/"
         response = self.client.put(url, data, format="json", **self.headers)
         self.assertTrue("food_item" in response.data)
         self.assertTrue(response.data['status'])
@@ -408,7 +408,7 @@ class FoodItemsTestCase(RestaurantTestCase):
             "name": "updated name",
             "price": 100
         }
-        url = f"{self.base_url}/2"
+        url = f"{self.base_url}/2/"
         access_token = get_access_token(data=user_credentials)
         headers = {
             "HTTP_AUTHORIZATION": f"Bearer {access_token}"
@@ -423,7 +423,7 @@ class FoodItemsTestCase(RestaurantTestCase):
         Test item deletion.
         """
         self.create_test_food_item()
-        url = f"{self.base_url}/2"
+        url = f"{self.base_url}/2/"
         response = self.client.delete(url, format="json", **self.headers)
         self.assertTrue("message" in response.data)
         self.assertTrue(response.data['status'])
@@ -449,7 +449,7 @@ class DiscountTestCase(RestaurantTestCase):
         """
         data = {
             "discount_type": "amount",
-            "discount_amount": 20
+            "discount_amount": 10
         }
         response = self.client.post(
             self.discount_url, data, format="json", **self.headers)
