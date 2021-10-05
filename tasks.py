@@ -42,7 +42,7 @@ def create_notification(self, order_id):
 
 
 @app.task(bind=True, max_retries=3)
-def verify_user_email(self, user_id, **kwargs):
+def send_verify_users_email(self, user_id, **kwargs):
     user = User.objects.get(id=user_id)
     access_token = AccessToken.for_user(user)
     access_token.set_exp(lifetime=timedelta(minutes=10))

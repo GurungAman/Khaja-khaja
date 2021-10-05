@@ -6,9 +6,9 @@ from django.utils.encoding import (
     smart_str)
 from django.utils.http import urlsafe_base64_decode
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from drf_spectacular.utils import OpenApiParameter, extend_schema
+from drf_spectacular.utils import extend_schema
 import jwt
 from .serializers import (
     ChangePasswordSerializer,
@@ -21,9 +21,10 @@ User = get_user_model()
 
 # Create your views here.
 
+
 @extend_schema(request=ChangePasswordSerializer)
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def change_password(request):
     user = request.user
     data = request.data

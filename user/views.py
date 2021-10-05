@@ -12,7 +12,7 @@ from .serializers import (
 from .customer_utils import customer_details
 from .models import Customer
 from permissions import IsCustomerOnly
-from tasks import verify_user_email
+from tasks import send_verify_users_email
 
 
 User = get_user_model()
@@ -51,8 +51,8 @@ def register_customer(request):
             data = customer_serializer.data
             customer_serializer.save(data)
             current_site = get_current_site(request)
-            # verify_user_email.delay(
-            #     user_id=user.id, domain=current_site.domain)
+            send_verify_users_email.delay(
+                user_id=user.id, domain=current_site.domain)
             response['data'] = customer_details(user.email)
             response['status'] = True
         else:

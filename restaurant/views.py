@@ -24,7 +24,7 @@ from .restaurant_utils import (
 from permissions import IsRestaurantOnly, IsRestaurantOrReadOnly
 from .decorators import restaurant_owner_only
 from user.serializers import CreateBaseUserSerializer
-from tasks import verify_user_email
+from tasks import send_verify_users_email
 
 # Create your views here.
 
@@ -61,7 +61,8 @@ def register_restaurant(request):
             data = restaurant_serializer.data
             restaurant = restaurant_serializer.save(data)
             current_site = get_current_site(request)
-            # verify_user_email.delay(user=user, domain=current_site.domain)
+            send_verify_users_email.delay(
+                user_id=user.id, domain=current_site.domain)
             response['restaurant_data'] = restaurant_details([restaurant])
             response['status'] = True
         else:

@@ -173,7 +173,6 @@ SPECTACULAR_SETTINGS = {
 # }
 
 
-
 #  JWT settings
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
