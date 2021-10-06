@@ -191,7 +191,8 @@ SIMPLE_JWT = {
 
 MAX_IMAGE_SIZE = 3145728
 
-CELERY_BROKER_URL = 'redis://127.0.0.1:6379'
+CELERY_BROKER_URL = 'redis://redis:6379/'
+# CELERY_BROKER_URL = 'redis://localhost:6379/'
 
 CELERY_ACCEPT_CONTENT = ['json']  # Accepts List
 CELERY_TASK_SERIALIZER = 'json'  # Accepts string

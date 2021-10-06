@@ -1,17 +1,18 @@
-from rest_framework.test import APITestCase
 from django.contrib.auth import get_user_model
 from restaurant.models import Restaurant
 from utils import get_access_token
+from test import ProjectTestCase
 
 User = get_user_model()
 
 
-class RestaurantTestCase(APITestCase):
+class RestaurantTestCase(ProjectTestCase):
     """
     Access is granted only to restaurant users only
     """
 
     def setUp(self):
+        super().setUp()
         self.base_url = "/api/restaurant/food_items"
         restaurant_credentials = {
             "email": 'restaurant@test.com',

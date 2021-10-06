@@ -1,16 +1,18 @@
-from rest_framework.test import APITestCase
 from django.contrib.auth import get_user_model
 from user.models import Customer
 from restaurant.models import Restaurant, FoodItems
 from utils import get_access_token
 from .models import OrderItem
+from test import ProjectTestCase
+
 
 # Create your tests here.
 User = get_user_model()
 
 
-class CartTestCase(APITestCase):
+class CartTestCase(ProjectTestCase):
     def setUp(self):
+        super().setUp()
         self.base_url = "/api/customer"
         password = "Valid_password123"
         user1 = User.objects.create_user(
@@ -169,7 +171,7 @@ class CartTestCase(APITestCase):
 
     def test_get_order_details(self):
         """
-        Get details of all items in cart along with their toal cost and count. 
+        Get details of all items in cart along with their toal cost and count.
         """
         food_item2 = FoodItems.objects.create(
             restaurant=self.restaurant,

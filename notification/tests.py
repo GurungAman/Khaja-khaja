@@ -1,17 +1,19 @@
-from rest_framework.test import APITestCase
 from django.contrib.auth import get_user_model
 from utils import get_access_token
 from restaurant.models import FoodItems, Restaurant
 from cart.models import OrderItem
 from user.models import Customer
 from .models import Notification as NotificationModel
+from test import ProjectTestCase
+
 
 # Create your tests here.
 User = get_user_model()
 
 
-class NotificationtestCase(APITestCase):
+class NotificationtestCase(ProjectTestCase):
     def setUp(self):
+        super().setUp()
         self.base_url = "/api/notifications"
         password = "Valid_password123"
         user1 = User.objects.create_user(

@@ -1,4 +1,3 @@
-from rest_framework.test import APITestCase
 from django.contrib.auth import get_user_model
 from utils import get_access_token
 from django.core import mail
@@ -7,6 +6,7 @@ from django.utils.encoding import smart_bytes
 from django.utils.http import urlsafe_base64_encode
 from datetime import timedelta
 from rest_framework_simplejwt.tokens import AccessToken
+from test import ProjectTestCase
 
 
 # Create your tests here.
@@ -15,8 +15,9 @@ from rest_framework_simplejwt.tokens import AccessToken
 User = get_user_model()
 
 
-class ChangePasswordTestCase(APITestCase):
+class ChangePasswordTestCase(ProjectTestCase):
     def setUp(self):
+        super().setUp()
         self.base_url = "/api/password"
         self.user_credentials = {
             "email": "user@test.com",

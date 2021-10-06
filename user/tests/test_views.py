@@ -1,14 +1,15 @@
 from django.contrib.auth import get_user_model
-from rest_framework.test import APITestCase
 from user.customer_utils import customer_details
 from utils import get_access_token
+from test import ProjectTestCase
 # Create your tests here.
 
 User = get_user_model()
 
 
-class UserTestCase(APITestCase):
+class UserTestCase(ProjectTestCase):
     def setUp(self):
+        super().setUp()
         self.base_url = "/api/customer"
         self.register_customer_url = f"{self.base_url}/register/"
         self.data = {
@@ -104,7 +105,8 @@ class UserTestCase(APITestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_get_unvertified_customer_details(self):
-        """ Return error when trying to get details about inactive customer. """
+        """ Return error when trying to get
+        details about inactive customer. """
         self.resgister_customer()
         url = f"{self.base_url}/"
         response = self.client.get(

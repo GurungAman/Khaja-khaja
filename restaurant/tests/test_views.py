@@ -1,10 +1,10 @@
 from django.contrib.auth import get_user_model
-from rest_framework.test import APITestCase
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from restaurant.models import Restaurant, FoodItems, Category, Tags, Discount
 from restaurant.restaurant_utils import restaurant_details
 from .restaurant_test_setup import RestaurantTestCase
 from utils import get_access_token
+from test import ProjectTestCase
 
 
 # Create your tests here.
@@ -12,7 +12,7 @@ from utils import get_access_token
 User = get_user_model()
 
 
-class RestaurantUserTestCase(APITestCase):
+class RestaurantUserTestCase(ProjectTestCase):
     def setUp(self):
         self.base_url = "/api/restaurant"
         self.resgister_restaurant_url = f"{self.base_url}/register/"
