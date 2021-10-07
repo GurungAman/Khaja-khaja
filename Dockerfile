@@ -4,8 +4,8 @@ ENV PYTHONBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 WORKDIR /usr/src/app/khaja_khaja
-COPY requirements-dev.txt /usr/src/app/khaja_khaja
+COPY requirements.txt /usr/src/app/khaja_khaja
 RUN pip install --upgrade pip \
-    && pip install -r requirements-dev.txt
+    && pip install -r requirements.txt
 
-COPY . /usr/src/app
+COPY . /usr/src/app/khaja_khaja
