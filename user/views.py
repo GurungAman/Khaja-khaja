@@ -14,7 +14,6 @@ from .models import Customer
 from permissions import IsCustomerOnly
 from tasks import send_verify_users_email
 
-
 User = get_user_model()
 
 # Create your views here.
@@ -51,7 +50,6 @@ def register_customer(request):
             data = customer_serializer.data
             customer_serializer.save(data)
             current_site = get_current_site(request)
-            print(user.id)
             send_verify_users_email.delay(
                 user_id=user.id, domain=current_site.domain)
             response['data'] = customer_details(user.email)

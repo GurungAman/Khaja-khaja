@@ -9,12 +9,12 @@ from cart.models import OrderItem
 User = get_user_model()
 
 f = Faker()
-password = 'amangrg123'
+password = 'test_user123'
 
 print("Creating superuser.!")
 user = User.objects.create_superuser(
     email='admin@admin.com',
-    password=password
+    password='adminuser123'
 )
 #  Create customer users
 for i in range(10):
@@ -22,6 +22,8 @@ for i in range(10):
         email=f"test{i+1}@customer.com",
         password=password
     )
+    base_user_customer.is_active = True
+    base_user_customer.save()
     name = f.name().split(' ')
     print(f"creating customer {name[0]}")
     customer = Customer.objects.create(
@@ -34,6 +36,8 @@ for i in range(10):
         email=f"test{i+1}@restaurant.com",
         password=password
     )
+    base_user_restaurant.is_active = True
+    base_user_restaurant.save()
     r_name = f.name().split(' ')[0]
     print(f"Creating restaurant {r_name}")
     restaurant = Restaurant.objects.create(
