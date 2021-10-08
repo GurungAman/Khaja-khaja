@@ -9,3 +9,4 @@ RUN pip install --upgrade pip \
     && pip install -r requirements.txt
 
 COPY . /usr/src/app/khaja_khaja
+RUN chmod +x /usr/src/app/khaja_khaja/seeder.sh
