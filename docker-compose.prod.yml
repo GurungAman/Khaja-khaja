@@ -2,29 +2,34 @@ version: "3.8"
 
 services:
   redis:
+    container_name: khaja_khaja_redis_prod
     image: redis:alpine
 
   app:
     container_name: khaja_khaja_prod
     build: .
     command: gunicorn khaja_khaja.wsgi:application --bind 0.0.0.0:8000
-    ports:
-      - "8000:8000"
+    volumes:
+      - static_volume:/usr/src/app/khaja_khaja/static/
+      - media_volume:/usr/src/app/khaja_khaja/media/
+    expose:
+      - 8000
     depends_on:
       - redis
       - db
 
   db:
+    container_name: khaja_khaja_db_prod
     image: postgres:13.0-alpine
     volumes:
       - db_data:/var/lib/postgresql/data/
     environment:
-      - POSTGRES_USER="${POSTGRES_USER}"
-      - POSTGRES_PASSWORD="${POSTGRES_PASSWORD}"
-      - POSTGRES_DB="${POSTGRES_DB}"
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
 
   celery:
-    restart: always
+    container_name: khaja_khaja_celery_prod
     build: .
     volumes:
       - .:/usr/src/app/khaja_khaja
@@ -34,5 +39,17 @@ services:
       - redis
       - db
 
+  nginx:
+    build: ./nginx
+    ports: 
+      - 8888:80
+    volumes:
+      - static_volume:/usr/src/app/khaja_khaja/static/
+      - media_volume:/usr/src/app/khaja_khaja/media/
+    depends_on:
+      - app
+
 volumes:
   db_data:
+  static_volume:
+  media_volume:
