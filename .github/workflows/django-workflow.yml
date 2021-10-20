@@ -44,10 +44,10 @@ jobs:
       run: docker-compose up --build -d
 
     - name: Make migrations
-      run: docker exec -it khaja_khaja python manage.py migrate
+      run: docker exec -i khaja_khaja python manage.py migrate
 
-    - name: Make migrations
-      run: docker exec -it khaja_khaja python manage.py test
+    - name: Run tests
+      run: docker exec -i khaja_khaja python manage.py test
 
     - name: Stop Containers
       run: docker-compose down 
